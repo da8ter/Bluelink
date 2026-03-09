@@ -15,7 +15,7 @@ Konfigurator-Modul zur Verwaltung der Fahrzeug-Instanzen. Zeigt alle im Bluelink
 
 ## Modul-URL
 
-`https://github.com/ssp/Bluelink`
+`https://github.com/da8ter/Bluelink`
 
 ## Einstellungen
 
