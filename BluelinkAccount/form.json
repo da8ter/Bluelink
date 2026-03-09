@@ -5,16 +5,6 @@
             "caption": "Credentials",
             "items": [
                 {
-                    "type": "ValidationTextBox",
-                    "name": "Username",
-                    "caption": "Username (Email)"
-                },
-                {
-                    "type": "PasswordTextBox",
-                    "name": "Password",
-                    "caption": "Password"
-                },
-                {
                     "type": "PasswordTextBox",
                     "name": "PIN",
                     "caption": "PIN (4 digits)"
@@ -45,22 +35,19 @@
                 {
                     "type": "ValidationTextBox",
                     "name": "BaseURL",
-                    "caption": "API Base URL"
+                    "caption": "API Base URL",
+                    "enabled": false
                 },
                 {
                     "type": "ValidationTextBox",
                     "name": "ClientID",
-                    "caption": "Client ID"
+                    "caption": "Client ID",
+                    "enabled": false
                 },
                 {
                     "type": "PasswordTextBox",
                     "name": "BasicToken",
                     "caption": "Basic Token"
-                },
-                {
-                    "type": "ValidationTextBox",
-                    "name": "StampURL",
-                    "caption": "Stamp Source URL"
                 }
             ]
         },

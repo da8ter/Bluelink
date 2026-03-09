@@ -22,7 +22,7 @@ Funktionen:
 
 ## Modul-URL
 
-`https://github.com/da8ter/Bluelink`
+`https://github.com/ssp/Bluelink`
 
 ## Einstellungen
 
@@ -40,7 +40,7 @@ Funktionen:
 
 ## Variablen
 
-Die Statusvariablen verwenden Symcon-Darstellungen. 
+Die Statusvariablen verwenden native Symcon-Darstellungen. Tür- und Fensterstatus sind fachlich `bool` und werden als **Wertanzeige** mit `OPTIONS` dargestellt. Der Ladezustand bleibt wegen seiner drei Zustände `int` und wird als **Wertanzeige** mit `INTERVALS` dargestellt.
 
 ### Status
 

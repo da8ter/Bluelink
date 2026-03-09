@@ -13,27 +13,22 @@ class BluelinkAccount extends IPSModule
     private const EU_BASE_URL = 'https://prd.eu-ccapi.hyundai.com:8080';
     private const EU_CLIENT_ID = '6d477c38-3ca4-4cf3-9557-2a1929a94654';
     private const EU_BASIC_TOKEN = 'Basic NmQ0NzdjMzgtM2NhNC00Y2YzLTk1NTctMmExOTI5YTk0NjU0OktVeTQ5WHhQekxwTHVvSzB4aEJDNzdXNlZYaG10UVI5aVFobUlGampvWTRJcHhzVg==';
-    private const DEFAULT_STAMP_URL = 'https://raw.githubusercontent.com/neoPix/bluelinky-stamps/master/hyundai-014d2225-8495-4735-812d-2616334fd15d.v2.json';
 
     public function Create()
     {
         parent::Create();
 
         // Properties
-        $this->RegisterPropertyString('Username', '');
-        $this->RegisterPropertyString('Password', '');
         $this->RegisterPropertyString('PIN', '');
         $this->RegisterPropertyString('RefreshToken', '');
         $this->RegisterPropertyString('Region', 'EU');
         $this->RegisterPropertyString('BaseURL', self::EU_BASE_URL);
         $this->RegisterPropertyString('ClientID', self::EU_CLIENT_ID);
         $this->RegisterPropertyString('BasicToken', self::EU_BASIC_TOKEN);
-        $this->RegisterPropertyString('StampURL', self::DEFAULT_STAMP_URL);
         $this->RegisterPropertyInteger('DebugLevel', 0);
 
-        // Buffers for token and stamp cache
+        // Buffers for token cache
         $this->SetBuffer('TokenCache', '');
-        $this->SetBuffer('StampCache', '');
         $this->SetBuffer('VehicleList', '');
     }
 
@@ -133,10 +128,6 @@ class BluelinkAccount extends IPSModule
                 $tokenCache = $auth->getTokenCacheData();
                 $this->SetBuffer('TokenCache', $tokenCache);
                 $this->SendDebug('TestLogin', 'Token cache saved (' . strlen($tokenCache) . ' bytes)', 0);
-
-                // Also save stamp cache
-                $stampService = $this->createStampService();
-                $this->SetBuffer('StampCache', $stampService->getCacheData());
 
                 $this->SetStatus(IS_ACTIVE);
                 $this->SendDebug('TestLogin', 'Login successful. Token expires: ' . ($result['tokenExpiry'] ?? 'n/a'), 0);
@@ -344,11 +335,7 @@ class BluelinkAccount extends IPSModule
 
     private function createStampService(): BluelinkStampService
     {
-        $stampUrl = $this->ReadPropertyString('StampURL');
-        $service = new BluelinkStampService($stampUrl);
-        $cache = $this->GetBuffer('StampCache');
-        $service->loadFromCache($cache);
-        return $service;
+        return new BluelinkStampService();
     }
 
     private function createAuthService(): BluelinkAuthService
@@ -365,11 +352,7 @@ class BluelinkAccount extends IPSModule
             $this->SendDebug('Auth', $message, 0);
         });
 
-        $auth->setCredentials(
-            $this->ReadPropertyString('Username'),
-            $this->ReadPropertyString('Password'),
-            $this->ReadPropertyString('PIN')
-        );
+        $auth->setPin($this->ReadPropertyString('PIN'));
 
         $refreshToken = $this->ReadPropertyString('RefreshToken');
         if (!empty($refreshToken)) {
@@ -412,30 +395,18 @@ class BluelinkAccount extends IPSModule
     private function hasValidConfig(): bool
     {
         $refreshToken = $this->ReadPropertyString('RefreshToken');
-        $username = $this->ReadPropertyString('Username');
-        $password = $this->ReadPropertyString('Password');
-
-        return !empty($refreshToken) || (!empty($username) && !empty($password));
+        return !empty($refreshToken);
     }
 
     // ── Debug with secret masking ───────────────────────────────────
 
-    public function SendDebug($Message, $Data, $Format)
+    protected function SendDebug($Message, $Data, $Format)
     {
         // Mask secrets in debug output
         $maskedData = $Data;
         if (is_string($maskedData)) {
-            $username = $this->ReadPropertyString('Username');
-            $password = $this->ReadPropertyString('Password');
             $pin = $this->ReadPropertyString('PIN');
             $refreshToken = $this->ReadPropertyString('RefreshToken');
-
-            if (!empty($username)) {
-                $maskedData = str_replace($username, BluelinkAuthService::maskSecret($username), $maskedData);
-            }
-            if (!empty($password)) {
-                $maskedData = str_replace($password, '***PASSWORD***', $maskedData);
-            }
             if (!empty($pin)) {
                 $maskedData = str_replace($pin, '****', $maskedData);
             }
@@ -443,7 +414,6 @@ class BluelinkAccount extends IPSModule
                 $maskedData = str_replace($refreshToken, BluelinkAuthService::maskSecret($refreshToken, 8), $maskedData);
             }
         }
-
         parent::SendDebug($Message, $maskedData, $Format);
     }
 }

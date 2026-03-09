@@ -17,8 +17,6 @@ class BluelinkAuthService
     private string $refreshToken = '';
     private int $tokenExpiry = 0;
     private string $deviceId = '';
-    private string $username = '';
-    private string $password = '';
     private string $pin = '';
 
     /** @var callable|null */
@@ -48,10 +46,8 @@ class BluelinkAuthService
         }
     }
 
-    public function setCredentials(string $username, string $password, string $pin): void
+    public function setPin(string $pin): void
     {
-        $this->username = $username;
-        $this->password = $password;
         $this->pin = $pin;
     }
 
@@ -69,7 +65,7 @@ class BluelinkAuthService
 
         $this->log('Token invalid/expired. tokenExpiry=' . $this->tokenExpiry . ' now=' . time()
             . ' hasRefreshToken=' . (!empty($this->refreshToken) ? 'yes(' . strlen($this->refreshToken) . ' chars)' : 'no')
-            . ' hasCredentials=' . (!empty($this->username) ? 'yes' : 'no'));
+        );
 
         if (!empty($this->refreshToken)) {
             $this->log('Attempting token refresh...');
@@ -78,14 +74,7 @@ class BluelinkAuthService
             return $this->accessToken;
         }
 
-        if (!empty($this->username) && !empty($this->password)) {
-            $this->log('Attempting credential login...');
-            $this->loginWithCredentials();
-            $this->log('Credential login successful. Expiry: ' . date('H:i:s', $this->tokenExpiry));
-            return $this->accessToken;
-        }
-
-        throw new Exception('No valid authentication method available. Provide a refresh token or credentials.');
+        throw new Exception('No valid authentication method available. Provide a refresh token.');
     }
 
     public function getPin(): string
@@ -161,12 +150,11 @@ class BluelinkAuthService
             $this->log('=== TestLogin START ===');
             $this->log('baseUrl=' . $this->baseUrl);
             $this->log('clientId=' . $this->clientId);
-            $this->log('hasUsername=' . (!empty($this->username) ? 'yes' : 'no'));
-            $this->log('hasPassword=' . (!empty($this->password) ? 'yes' : 'no'));
             $this->log('hasRefreshToken=' . (!empty($this->refreshToken) ? 'yes(' . strlen($this->refreshToken) . ' chars)' : 'no'));
             $this->log('cachedTokenExpiry=' . ($this->tokenExpiry > 0 ? date('Y-m-d H:i:s', $this->tokenExpiry) : 'none'));
 
             $token = $this->getAccessToken();
+            $this->log('Access token obtained (length=' . strlen($token) . ')');
 
             // Also register device ID so it's cached for subsequent API calls
             $deviceId = $this->ensureDeviceId();
@@ -271,81 +259,6 @@ class BluelinkAuthService
         $data[6] = chr(ord($data[6]) & 0x0f | 0x40); // version 4
         $data[8] = chr(ord($data[8]) & 0x3f | 0x80); // variant
         return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
-    }
-
-    private function loginWithCredentials(): void
-    {
-        // Step 1: Get session cookie
-        $sessionUrl = $this->baseUrl . '/api/v1/user/oauth2/authorize?response_type=code&state=test&client_id=' . $this->clientId . '&redirect_uri=' . $this->baseUrl . '/api/v1/user/oauth2/redirect';
-        $this->log('[Login Step 1] GET session: ' . $sessionUrl);
-        $sessionResponse = $this->httpGet($sessionUrl);
-        $sessionStatus = $this->parseStatusCode($sessionResponse['headers'] ?? []);
-        $this->log('[Login Step 1] HTTP ' . $sessionStatus . ' headers=' . count($sessionResponse['headers'] ?? []));
-
-        // Extract cookies from response
-        $cookies = $this->extractCookies($sessionResponse['headers'] ?? []);
-        $this->log('[Login Step 1] Cookies: ' . (empty($cookies) ? 'NONE' : $cookies));
-
-        // Step 2: Set language
-        $langUrl = $this->baseUrl . '/api/v1/user/language';
-        $this->log('[Login Step 2] POST language: ' . $langUrl);
-        $langResponse = $this->httpPost($langUrl, json_encode(['lang' => 'en']), [
-            'Content-Type: application/json',
-            'Cookie: ' . $cookies,
-        ]);
-        $langStatus = $this->parseStatusCode($langResponse['headers'] ?? []);
-        $this->log('[Login Step 2] HTTP ' . $langStatus);
-
-        // Step 3: Sign in
-        $loginUrl = $this->baseUrl . '/api/v1/user/signin';
-        $this->log('[Login Step 3] POST signin: ' . $loginUrl);
-        $loginPayload = json_encode([
-            'email'    => $this->username,
-            'password' => $this->password,
-        ]);
-        $loginResponse = $this->httpPost($loginUrl, $loginPayload, [
-            'Content-Type: application/json',
-            'Cookie: ' . $cookies,
-        ]);
-        $loginStatus = $this->parseStatusCode($loginResponse['headers'] ?? []);
-        $this->log('[Login Step 3] HTTP ' . $loginStatus . ' bodyLength=' . strlen($loginResponse['body'] ?? ''));
-
-        $loginData = json_decode($loginResponse['body'] ?? '', true);
-        if (empty($loginData['redirectUrl'])) {
-            $this->log('[Login Step 3] FAILED. Response: ' . substr($loginResponse['body'] ?? '', 0, 500));
-            $errDetail = $loginData['error'] ?? $loginData['errMsg'] ?? $loginData['message'] ?? '';
-            throw new Exception('Login failed: No redirect URL received. ' . ($errDetail ? 'Detail: ' . $errDetail . '. ' : '') . 'Check credentials or try refresh token method.');
-        }
-        $this->log('[Login Step 3] Got redirectUrl');
-
-        // Step 4: Follow redirect to get auth code
-        $redirectUrl = $loginData['redirectUrl'];
-        $this->log('[Login Step 4] GET redirect (no follow)');
-        $redirectResponse = $this->httpGet($redirectUrl, false);
-        $redirectStatus = $this->parseStatusCode($redirectResponse['headers'] ?? []);
-        $locationHeader = $this->extractLocationHeader($redirectResponse['headers'] ?? []);
-        $this->log('[Login Step 4] HTTP ' . $redirectStatus . ' Location: ' . (empty($locationHeader) ? 'NONE' : 'present'));
-
-        if (empty($locationHeader)) {
-            $this->log('[Login Step 4] FAILED. All headers: ' . implode(' | ', $redirectResponse['headers'] ?? []));
-            throw new Exception('Login failed: No authorization code received (HTTP ' . $redirectStatus . ')');
-        }
-
-        // Extract code from redirect
-        $parsedUrl = parse_url($locationHeader);
-        parse_str($parsedUrl['query'] ?? '', $queryParams);
-        $authCode = $queryParams['code'] ?? '';
-
-        if (empty($authCode)) {
-            $this->log('[Login Step 4] No code in Location. Query: ' . ($parsedUrl['query'] ?? 'empty'));
-            throw new Exception('Login failed: Authorization code not found in redirect');
-        }
-        $this->log('[Login Step 4] Got auth code (' . strlen($authCode) . ' chars)');
-
-        // Step 5: Exchange code for tokens
-        $this->log('[Login Step 5] Exchanging code for tokens...');
-        $this->exchangeCodeForTokens($authCode);
-        $this->log('[Login Step 5] Token exchange complete');
     }
 
     private function refreshAccessToken(): void

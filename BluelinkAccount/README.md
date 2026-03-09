@@ -26,15 +26,12 @@ Splitter-Modul für die Hyundai Bluelink EU API. Verwaltet:
 
 | Eigenschaft | Typ | Beschreibung |
 |-------------|-----|-------------|
-| Username | string | Bluelink E-Mail-Adresse |
-| Password | string | Bluelink Passwort |
 | PIN | string | 4-stelliger PIN für Remote-Aktionen |
 | Refresh Token | string | OAuth2 Refresh Token (empfohlen) |
 | Region | select | Region (aktuell nur EU) |
 | Base URL | string | API-Endpunkt |
 | Client ID | string | OAuth2 Client-ID |
 | Basic Token | string | OAuth2 Basic-Token |
-| Stamp URL | string | URL zur Stamp-Quelle |
 | Debug Level | select | Off / Basic / Verbose |
 
 ## PHP-Befehle

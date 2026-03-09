@@ -2,8 +2,6 @@
     "translations": {
         "de": {
             "Credentials": "Anmeldedaten",
-            "Username (Email)": "Benutzername (E-Mail)",
-            "Password": "Passwort",
             "PIN (4 digits)": "PIN (4-stellig)",
             "Refresh Token (recommended)": "Refresh Token (empfohlen)",
             "The refresh token is the recommended authentication method. See README for instructions.": "Der Refresh Token ist die empfohlene Authentifizierungsmethode. Siehe README für Anleitung.",
@@ -13,7 +11,6 @@
             "API Base URL": "API Basis-URL",
             "Client ID": "Client-ID",
             "Basic Token": "Basic Token",
-            "Stamp Source URL": "Stamp-Quell-URL",
             "Debug": "Debug",
             "Debug Level": "Debug-Stufe",
             "Off": "Aus",
@@ -29,8 +26,6 @@
         },
         "en": {
             "Credentials": "Credentials",
-            "Username (Email)": "Username (Email)",
-            "Password": "Password",
             "PIN (4 digits)": "PIN (4 digits)",
             "Refresh Token (recommended)": "Refresh Token (recommended)",
             "The refresh token is the recommended authentication method. See README for instructions.": "The refresh token is the recommended authentication method. See README for instructions.",
@@ -40,7 +35,6 @@
             "API Base URL": "API Base URL",
             "Client ID": "Client ID",
             "Basic Token": "Basic Token",
-            "Stamp Source URL": "Stamp Source URL",
             "Debug": "Debug",
             "Debug Level": "Debug Level",
             "Off": "Off",

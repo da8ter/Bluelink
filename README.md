@@ -16,14 +16,14 @@ Liest Fahrzeugdaten und steuert Remote-Aktionen über die Hyundai Bluelink API. 
 
 - IP-Symcon >= 8.2
 - Hyundai Bluelink Account (EU)
-- Refresh Token (empfohlen) oder Benutzername/Passwort
+- Refresh Token (empfohlen)
 - PIN (4-stellig) für Remote-Aktionen
 
 ## Installation
 
 1. Im IP-Symcon **Objektbaum** → **Kern Instanzen** → **Module Control** öffnen
 2. URL hinzufügen: `https://github.com/da8ter/Bluelink`
-3. **Bluelink Account** Instanz erstellen und Anmeldedaten eingeben
+3. **Bluelink Account** Instanz erstellen und Refresh Token eintragen
 4. **Bluelink Configurator** Instanz erstellen (verbindet sich automatisch mit dem Account)
 5. Im Konfigurator die gewünschten Fahrzeuge als Instanzen anlegen
 
@@ -33,19 +33,15 @@ Liest Fahrzeugdaten und steuert Remote-Aktionen über die Hyundai Bluelink API. 
 
 Hyundai EU verwendet reCAPTCHA beim Login, was eine automatische Anmeldung erschwert. Der **Refresh Token** ist daher die zuverlässigste Methode:
 
-1. Refresh Token extern erzeugen (z.B. über das [hyundai_kia_connect_api](https://github.com/Hyundai-Kia-Connect/hyundai_kia_connect_api) Python-Script)
+1. Refresh Token extern erzeugen (z.B. über das [hyundai_kia_connect_api](https://github.com/Hyundai-Kia-Connect/hyundai_kia_connect_api/tree/master/Hyundai%20Token%20Solution) Python-Script)
 2. Token im Account-Modul unter **Refresh Token** eintragen
 3. Login testen
-
-### Benutzername/Passwort (Fallback)
-
-Funktioniert nur, wenn Hyundai kein reCAPTCHA erzwingt. Kann jederzeit brechen.
 
 ## Bekannte Einschränkungen
 
 - **EU Login-Flow**: Hyundai ändert den Login-Flow regelmäßig. Bei Problemen Refresh Token aktualisieren.
-- **Stamps**: Die EU API erfordert signierte Stamps. Diese werden lokal per CFB-XOR-Algorithmus generiert (kein externer Dienst nötig).
-- **12V-Batterie**: Häufige Fahrzeug-Refreshes (nicht Cloud-Status!) wecken das Auto und belasten die 12V-Batterie. Mindestintervall: 30 Minuten.
+- **Stamps**: Die EU API erfordert signierte Stamps. Diese werden lokal per CFB-XOR-Algorithmus generiert.
+- **12V-Batterie**: Häufige Fahrzeug-Refreshes (nicht Cloud-Status!) wecken das Auto und belasten die 12V-Batterie.
 - **Rate Limiting**: Die API hat Rate Limits. Das Modul implementiert automatischen Backoff.
 - **PIN**: Für alle Remote-Aktionen (Lock, Unlock, Klima, Laden) ist ein 4-stelliger PIN erforderlich.
 
