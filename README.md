@@ -1,4 +1,4 @@
-# Bluelink – IP-Symcon Library
+# Bluelink – IP-Symcon Anbindung
 
 Hyundai Bluelink Integration für IP-Symcon 8.2 (EU-Region).
 
@@ -22,7 +22,7 @@ Liest Fahrzeugdaten und steuert Remote-Aktionen über die Hyundai Bluelink API. 
 ## Installation
 
 1. Im IP-Symcon **Objektbaum** → **Kern Instanzen** → **Module Control** öffnen
-2. URL hinzufügen: `https://github.com/ssp/Bluelink`
+2. URL hinzufügen: `https://github.com/da8ter/Bluelink`
 3. **Bluelink Account** Instanz erstellen und Anmeldedaten eingeben
 4. **Bluelink Configurator** Instanz erstellen (verbindet sich automatisch mit dem Account)
 5. Im Konfigurator die gewünschten Fahrzeuge als Instanzen anlegen
