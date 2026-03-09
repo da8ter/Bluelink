@@ -1,0 +1,29 @@
+{
+    "elements": [],
+    "actions": [
+        {
+            "type": "Configurator",
+            "name": "Vehicles",
+            "caption": "Vehicles",
+            "rowCount": 5,
+            "add": true,
+            "delete": true,
+            "sort": {
+                "column": "VehicleName",
+                "direction": "ascending"
+            },
+            "columns": [
+                { "caption": "VIN", "name": "VIN", "width": "180px" },
+                { "caption": "Vehicle ID", "name": "VehicleId", "width": "150px" },
+                { "caption": "Name", "name": "VehicleName", "width": "200px" },
+                { "caption": "Model", "name": "Model", "width": "150px" },
+                { "caption": "Year", "name": "ModelYear", "width": "80px" }
+            ],
+            "values": []
+        }
+    ],
+    "status": [
+        { "code": 102, "icon": "active", "caption": "Active" },
+        { "code": 104, "icon": "inactive", "caption": "No account connected" }
+    ]
+}

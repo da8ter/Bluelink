@@ -1,0 +1,24 @@
+{
+    "translations": {
+        "de": {
+            "Vehicles": "Fahrzeuge",
+            "VIN": "FIN",
+            "Vehicle ID": "Fahrzeug-ID",
+            "Name": "Name",
+            "Model": "Modell",
+            "Year": "Baujahr",
+            "Active": "Aktiv",
+            "No account connected": "Kein Account verbunden"
+        },
+        "en": {
+            "Vehicles": "Vehicles",
+            "VIN": "VIN",
+            "Vehicle ID": "Vehicle ID",
+            "Name": "Name",
+            "Model": "Model",
+            "Year": "Year",
+            "Active": "Active",
+            "No account connected": "No account connected"
+        }
+    }
+}

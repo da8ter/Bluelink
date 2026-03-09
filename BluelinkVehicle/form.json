@@ -1,0 +1,156 @@
+{
+    "elements": [
+        {
+            "type": "ExpansionPanel",
+            "caption": "Vehicle",
+            "items": [
+                {
+                    "type": "ValidationTextBox",
+                    "name": "VIN",
+                    "caption": "VIN",
+                    "enabled": false
+                },
+                {
+                    "type": "ValidationTextBox",
+                    "name": "VehicleId",
+                    "caption": "Vehicle ID",
+                    "enabled": false
+                }
+            ]
+        },
+        {
+            "type": "ExpansionPanel",
+            "caption": "Polling",
+            "items": [
+                {
+                    "type": "NumberSpinner",
+                    "name": "PollInterval",
+                    "caption": "Poll Interval (seconds)",
+                    "minimum": 60,
+                    "maximum": 3600
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "AllowVehicleRefresh",
+                    "caption": "Allow vehicle refresh (wakes car, drains 12V battery)"
+                },
+                {
+                    "type": "NumberSpinner",
+                    "name": "ForceRefreshInterval",
+                    "caption": "Force refresh interval (seconds, 0 = disabled)",
+                    "minimum": 0,
+                    "maximum": 86400
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "RefreshOnAction",
+                    "caption": "Refresh status after remote actions"
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "ChargingPollEnabled",
+                    "caption": "Faster polling while charging"
+                },
+                {
+                    "type": "NumberSpinner",
+                    "name": "ChargingPollInterval",
+                    "caption": "Charging poll interval (seconds)",
+                    "minimum": 300,
+                    "maximum": 7200
+                }
+            ]
+        },
+        {
+            "type": "ExpansionPanel",
+            "caption": "Debug",
+            "items": [
+                {
+                    "type": "Select",
+                    "name": "DebugLevel",
+                    "caption": "Debug Level",
+                    "options": [
+                        { "caption": "Off", "value": 0 },
+                        { "caption": "Basic", "value": 1 },
+                        { "caption": "Verbose", "value": 2 }
+                    ]
+                }
+            ]
+        }
+    ],
+    "actions": [
+        {
+            "type": "RowLayout",
+            "items": [
+                {
+                    "type": "Button",
+                    "caption": "Update Status",
+                    "onClick": "BL_UpdateStatus($id);"
+                },
+                {
+                    "type": "Button",
+                    "caption": "Refresh Location",
+                    "onClick": "BL_RefreshLocation($id);"
+                },
+                {
+                    "type": "Button",
+                    "caption": "Refresh Vehicle (wakes car)",
+                    "onClick": "BL_RefreshVehicleStatus($id);",
+                    "confirm": "This will wake up the vehicle and may drain the 12V battery. Continue?"
+                }
+            ]
+        },
+        {
+            "type": "RowLayout",
+            "items": [
+                {
+                    "type": "Button",
+                    "caption": "Lock",
+                    "onClick": "BL_Lock($id);"
+                },
+                {
+                    "type": "Button",
+                    "caption": "Unlock",
+                    "onClick": "BL_Unlock($id);",
+                    "confirm": "This will unlock the vehicle. Continue?"
+                }
+            ]
+        },
+        {
+            "type": "RowLayout",
+            "items": [
+                {
+                    "type": "Button",
+                    "caption": "Climate Start",
+                    "onClick": "BL_ClimateStart($id, 22.0);"
+                },
+                {
+                    "type": "Button",
+                    "caption": "Climate Stop",
+                    "onClick": "BL_ClimateStop($id);"
+                }
+            ]
+        },
+        {
+            "type": "RowLayout",
+            "items": [
+                {
+                    "type": "Button",
+                    "caption": "Charge Start",
+                    "onClick": "BL_ChargeStart($id);"
+                },
+                {
+                    "type": "Button",
+                    "caption": "Charge Stop",
+                    "onClick": "BL_ChargeStop($id);"
+                }
+            ]
+        }
+    ],
+    "status": [
+        { "code": 102, "icon": "active", "caption": "Active" },
+        { "code": 104, "icon": "inactive", "caption": "No vehicle configured" },
+        { "code": 200, "icon": "error", "caption": "API error" },
+        { "code": 201, "icon": "error", "caption": "Command failed" },
+        { "code": 202, "icon": "error", "caption": "Rate limited" }
+    ]
+}

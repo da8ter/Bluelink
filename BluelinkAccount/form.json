@@ -1,0 +1,103 @@
+{
+    "elements": [
+        {
+            "type": "ExpansionPanel",
+            "caption": "Credentials",
+            "items": [
+                {
+                    "type": "ValidationTextBox",
+                    "name": "Username",
+                    "caption": "Username (Email)"
+                },
+                {
+                    "type": "PasswordTextBox",
+                    "name": "Password",
+                    "caption": "Password"
+                },
+                {
+                    "type": "PasswordTextBox",
+                    "name": "PIN",
+                    "caption": "PIN (4 digits)"
+                },
+                {
+                    "type": "PasswordTextBox",
+                    "name": "RefreshToken",
+                    "caption": "Refresh Token (recommended)"
+                },
+                {
+                    "type": "Label",
+                    "caption": "The refresh token is the recommended authentication method. See README for instructions."
+                }
+            ]
+        },
+        {
+            "type": "ExpansionPanel",
+            "caption": "Region & Endpoints",
+            "items": [
+                {
+                    "type": "Select",
+                    "name": "Region",
+                    "caption": "Region",
+                    "options": [
+                        { "caption": "Europe (EU)", "value": "EU" }
+                    ]
+                },
+                {
+                    "type": "ValidationTextBox",
+                    "name": "BaseURL",
+                    "caption": "API Base URL"
+                },
+                {
+                    "type": "ValidationTextBox",
+                    "name": "ClientID",
+                    "caption": "Client ID"
+                },
+                {
+                    "type": "PasswordTextBox",
+                    "name": "BasicToken",
+                    "caption": "Basic Token"
+                },
+                {
+                    "type": "ValidationTextBox",
+                    "name": "StampURL",
+                    "caption": "Stamp Source URL"
+                }
+            ]
+        },
+        {
+            "type": "ExpansionPanel",
+            "caption": "Debug",
+            "items": [
+                {
+                    "type": "Select",
+                    "name": "DebugLevel",
+                    "caption": "Debug Level",
+                    "options": [
+                        { "caption": "Off", "value": 0 },
+                        { "caption": "Basic", "value": 1 },
+                        { "caption": "Verbose", "value": 2 }
+                    ]
+                }
+            ]
+        }
+    ],
+    "actions": [
+        {
+            "type": "Button",
+            "caption": "Test Login",
+            "onClick": "echo BL_TestLogin($id);"
+        },
+        {
+            "type": "Button",
+            "caption": "Load Vehicles",
+            "onClick": "echo BL_LoadVehicles($id);"
+        }
+    ],
+    "status": [
+        { "code": 102, "icon": "active", "caption": "Connected" },
+        { "code": 104, "icon": "inactive", "caption": "Not configured" },
+        { "code": 200, "icon": "error", "caption": "Authentication failed" },
+        { "code": 201, "icon": "error", "caption": "API error" },
+        { "code": 202, "icon": "error", "caption": "Rate limited" }
+    ]
+}
