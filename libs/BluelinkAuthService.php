@@ -122,7 +122,7 @@ class BluelinkAuthService
         ]);
     }
 
-    public function getAuthHeaders(): array
+    public function getAuthHeaders(int $ccs2Support = 0): array
     {
         $stamp = $this->stampService->getStamp();
         $deviceId = $this->ensureDeviceId();
@@ -131,7 +131,7 @@ class BluelinkAuthService
             . ' stamp=' . substr($stamp, 0, 16) . '...'
             . ' clientId=' . $this->clientId);
 
-        return [
+        $headers = [
             'Authorization: Bearer ' . $this->getAccessToken(),
             'ccsp-device-id: ' . $deviceId,
             'ccsp-application-id: ' . self::APP_ID,
@@ -140,8 +140,10 @@ class BluelinkAuthService
             'Host: prd.eu-ccapi.hyundai.com:8080',
             'Connection: Keep-Alive',
             'Accept-Encoding: gzip',
+            'Ccuccs2protocolsupport: ' . $ccs2Support,
             'User-Agent: okhttp/3.12.0',
         ];
+        return $headers;
     }
 
     public function testLogin(): array

@@ -175,7 +175,8 @@ class BluelinkAccount extends IPSModule
                 $this->SendDebug('LoadVehicles', 'Vehicle[' . $i . ']: VIN=' . ($info['VIN'] ?? 'n/a')
                     . ' ID=' . ($info['VehicleId'] ?? 'n/a')
                     . ' Name=' . ($info['VehicleName'] ?? 'n/a')
-                    . ' Model=' . ($info['Model'] ?? 'n/a'), 0);
+                    . ' Model=' . ($info['Model'] ?? 'n/a')
+                    . ' CCS2=' . ($info['CCS2Support'] ?? 0), 0);
             }
 
             $this->SetBuffer('VehicleList', json_encode($mapped));
@@ -208,13 +209,18 @@ class BluelinkAccount extends IPSModule
         $services = null;
         try {
             $services = $this->createApiClientWithAuth();
+            $ccs2 = $this->getVehicleCCS2Support($vehicleId);
+            $services['client']->setCCS2Support($ccs2);
+            $this->SendDebug('GetVehicleStatus', 'VehicleId=' . $vehicleId . ' CCS2Support=' . $ccs2, 0);
+
             $status = $services['client']->getVehicleStatus($vehicleId);
 
-            // Debug: raw airTemp before mapping
-            $vs = $status['vehicleStatus'] ?? $status;
-            $this->SendDebug('RawAirTemp', json_encode($vs['airTemp'] ?? 'missing'), 0);
-
-            $mapped = VehicleStatusMapper::mapStatus($status);
+            if (!empty($status['_ccs2'])) {
+                $this->SendDebug('GetVehicleStatus', 'Using CCS2 mapper', 0);
+                $mapped = VehicleStatusMapper::mapStatusCCS2($status);
+            } else {
+                $mapped = VehicleStatusMapper::mapStatus($status);
+            }
             return json_encode(['success' => true, 'status' => $mapped]);
         } catch (Exception $e) {
             $this->SendDebug('GetVehicleStatus', 'Error: ' . $e->getMessage(), 0);
@@ -390,6 +396,22 @@ class BluelinkAccount extends IPSModule
         $tokenCache = $auth->getTokenCacheData();
         $this->SetBuffer('TokenCache', $tokenCache);
         $this->SendDebug('TokenCache', 'Persisted (' . strlen($tokenCache) . ' bytes)', 0);
+    }
+
+    private function getVehicleCCS2Support(string $vehicleId): int
+    {
+        $cached = $this->GetBuffer('VehicleList');
+        if (!empty($cached)) {
+            $vehicles = json_decode($cached, true);
+            if (is_array($vehicles)) {
+                foreach ($vehicles as $v) {
+                    if (($v['VehicleId'] ?? '') === $vehicleId) {
+                        return (int) ($v['CCS2Support'] ?? 0);
+                    }
+                }
+            }
+        }
+        return 0;
     }
 
     private function hasValidConfig(): bool

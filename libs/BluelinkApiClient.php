@@ -19,6 +19,7 @@ class BluelinkApiClient
     private int $lastRequestTime = 0;
     private int $minRequestInterval = 2; // seconds between requests
     private int $backoffUntil = 0;
+    private int $ccs2Support = 0;
 
     public function __construct(string $baseUrl, BluelinkAuthService $authService)
     {
@@ -29,6 +30,11 @@ class BluelinkApiClient
     public function setLogger(callable $logger): void
     {
         $this->logger = $logger;
+    }
+
+    public function setCCS2Support(int $level): void
+    {
+        $this->ccs2Support = $level;
     }
 
     // ── Vehicle List ────────────────────────────────────────────────
@@ -67,6 +73,9 @@ class BluelinkApiClient
 
     public function getVehicleStatus(string $vehicleId): array
     {
+        if ($this->ccs2Support > 0) {
+            return $this->getVehicleStatusCCS2($vehicleId);
+        }
         $response = $this->request('GET', '/api/v1/spa/vehicles/' . $vehicleId . '/status/latest');
         $resMsg = $response['resMsg'] ?? [];
         // /status/latest returns resMsg.vehicleStatusInfo containing vehicleStatus + odometer
@@ -75,6 +84,19 @@ class BluelinkApiClient
             return $resMsg['vehicleStatusInfo'];
         }
         $this->log('Status response: no vehicleStatusInfo found, keys: ' . implode(', ', array_keys($resMsg)));
+        return $resMsg;
+    }
+
+    public function getVehicleStatusCCS2(string $vehicleId): array
+    {
+        $this->log('Using CCS2 endpoint for status');
+        $response = $this->request('GET', '/api/v1/spa/vehicles/' . $vehicleId . '/ccs2/carstatus/latest');
+        $resMsg = $response['resMsg'] ?? [];
+        if (isset($resMsg['state']['Vehicle'])) {
+            $this->log('CCS2 Status response: using state.Vehicle');
+            return ['_ccs2' => true, 'state' => $resMsg['state']['Vehicle']];
+        }
+        $this->log('CCS2 Status response: unexpected format, keys: ' . implode(', ', array_keys($resMsg)));
         return $resMsg;
     }
 
@@ -263,7 +285,7 @@ class BluelinkApiClient
         }
 
         $url = $this->baseUrl . $endpoint;
-        $authHeaders = $this->authService->getAuthHeaders();
+        $authHeaders = $this->authService->getAuthHeaders($this->ccs2Support);
         if (!empty($extraHeaders)) {
             $extraNames = array_map(function ($h) {
                 return strtolower(explode(':', $h, 2)[0]);

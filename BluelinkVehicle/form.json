@@ -27,7 +27,7 @@
                     "name": "PollInterval",
                     "caption": "Poll Interval (seconds)",
                     "minimum": 60,
-                    "maximum": 3600
+                    "maximum": 86400
                 },
                 {
                     "type": "CheckBox",
@@ -37,7 +37,7 @@
                 {
                     "type": "NumberSpinner",
                     "name": "ForceRefreshInterval",
-                    "caption": "Force refresh interval (seconds, 0 = disabled)",
+                    "caption": "Vehicle refresh interval (seconds, 0 = disabled)",
                     "minimum": 0,
                     "maximum": 86400
                 },
@@ -49,7 +49,7 @@
                 {
                     "type": "CheckBox",
                     "name": "ChargingPollEnabled",
-                    "caption": "Faster polling while charging"
+                    "caption": "Faster vehicle polling while charging"
                 },
                 {
                     "type": "NumberSpinner",

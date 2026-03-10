@@ -22,7 +22,7 @@ Funktionen:
 
 ## Modul-URL
 
-`https://github.com/ssp/Bluelink`
+`https://github.com/da8ter/Bluelink`
 
 ## Einstellungen
 
@@ -30,17 +30,17 @@ Funktionen:
 |-------------|-----|----------|-------------|
 | VIN | string | – | Fahrzeug-Identifikationsnummer (automatisch vom Konfigurator) |
 | Vehicle ID | string | – | Interne Bluelink-ID (automatisch) |
-| Poll Interval | integer | 300 | Abfrageintervall in Sekunden (min. 60, Cloud-Cache) |
+| Poll Interval | integer | 300 | Abfrageintervall Cloud in Sekunden (min. 60, Cloud-Cache) |
 | Allow Vehicle Refresh | bool | false | Erlaubt echten Fahrzeug-Refresh (weckt Auto, belastet 12V-Batterie) |
-| Force Refresh Interval | integer | 7200 | Intervall für Force-Refresh in Sekunden (0 = deaktiviert, weckt Auto) |
+| Vehicle Refresh Interval | integer | 0 | Intervall für Fahrzeug-Refresh in Sekunden (0 = deaktiviert, weckt Auto) |
 | Refresh On Action | bool | false | Status nach Remote-Aktion automatisch aktualisieren |
-| Faster Polling While Charging | bool | false | Schnelleres Force-Refresh-Intervall während des Ladens |
-| Charging Poll Interval | integer | 900 | Force-Refresh-Intervall während des Ladens in Sekunden (min. 300) |
+| Faster Vehicle Polling While Charging | bool | false | Schnelleres Fahrzeug-Polling während des Ladens |
+| Charging Poll Interval | integer | 900 | Fahrzeug-Refresh-Intervall während des Ladens in Sekunden (min. 300) |
 | Debug Level | select | Off | Off / Basic / Verbose |
 
 ## Variablen
 
-Die Statusvariablen verwenden native Symcon-Darstellungen. Tür- und Fensterstatus sind fachlich `bool` und werden als **Wertanzeige** mit `OPTIONS` dargestellt. Der Ladezustand bleibt wegen seiner drei Zustände `int` und wird als **Wertanzeige** mit `INTERVALS` dargestellt.
+Die Statusvariablen verwenden Symcon-Darstellungen. 
 
 ### Status
 

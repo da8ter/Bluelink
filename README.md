@@ -37,6 +37,17 @@ Hyundai EU verwendet reCAPTCHA beim Login, was eine automatische Anmeldung ersch
 2. Token im Account-Modul unter **Refresh Token** eintragen
 3. Login testen
 
+## CCS2-Protokoll
+
+Neuere Hyundai-Fahrzeuge nutzen das **CCS2-Protokoll** (Connected Car Services v2). Das Modul erkennt dies automatisch über das Feld `ccuCCS2ProtocolSupport` in der Fahrzeugliste und verwendet dann den CCS2-Endpoint (`/ccs2/carstatus/latest`) mit erweitertem Response-Format.
+
+**Vorteile des CCS2-Protokolls:**
+- **Echtzeit-Ladeleistung** (`ChargingPowerKw`) über `RealTimePower`
+- Erweiterte Batterie-Informationen (SOH, Temperatur, Kapazität)
+- Detailliertere Klima- und Sitzheizungsdaten
+
+> **Hinweis:** Fahrzeuge ohne CCS2-Support verwenden weiterhin den Legacy-Endpoint. Die `ChargingPowerKw`-Variable zeigt dort 0.0 kW, da die Legacy-API diesen Wert nicht liefert.
+
 ## Bekannte Einschränkungen
 
 - **EU Login-Flow**: Hyundai ändert den Login-Flow regelmäßig. Bei Problemen Refresh Token aktualisieren.
@@ -44,6 +55,7 @@ Hyundai EU verwendet reCAPTCHA beim Login, was eine automatische Anmeldung ersch
 - **12V-Batterie**: Häufige Fahrzeug-Refreshes (nicht Cloud-Status!) wecken das Auto und belasten die 12V-Batterie.
 - **Rate Limiting**: Die API hat Rate Limits. Das Modul implementiert automatischen Backoff.
 - **PIN**: Für alle Remote-Aktionen (Lock, Unlock, Klima, Laden) ist ein 4-stelliger PIN erforderlich.
+- **ChargingPowerKw**: Nur bei Fahrzeugen mit CCS2-Protokoll verfügbar (Legacy-API liefert diesen Wert nicht).
 
 ## Architektur
 

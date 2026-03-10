@@ -5,7 +5,7 @@ declare(strict_types=1);
 class BluelinkVehicle extends IPSModule
 {
     private const DEFAULT_POLL_INTERVAL = 300;
-    private const DEFAULT_FORCE_REFRESH_INTERVAL = 7200; // 120 minutes
+    private const DEFAULT_FORCE_REFRESH_INTERVAL = 0;
     private const DEFAULT_CHARGING_POLL_INTERVAL = 900; // 15 minutes
     private const MIN_VEHICLE_REFRESH_INTERVAL = 600; // 10 minutes
     private const COMMAND_POLL_INTERVAL = 5;
@@ -72,12 +72,35 @@ class BluelinkVehicle extends IPSModule
                 ['Value' => true, 'Caption' => $this->Translate('Locked'), 'Icon' => 'Lock', 'Color' => 0x00FF00, 'IconActive' => false],
             ], JSON_UNESCAPED_UNICODE),
         ];
+        $createInterval = static function (int $min, int $max, string $text, int $color): array {
+            return [
+                'IntervalMinValue'   => $min,
+                'IntervalMaxValue'   => $max,
+                'ConstantActive'     => true,
+                'ConstantValue'      => $text,
+                'ConversionFactor'   => 1,
+                'PrefixActive'       => false,
+                'PrefixValue'        => '',
+                'SuffixActive'       => false,
+                'SuffixValue'        => '',
+                'DigitsActive'       => false,
+                'DigitsValue'        => 0,
+                'IconActive'         => false,
+                'IconValue'          => '',
+                'ColorActive'        => true,
+                'ColorValue'         => $color,
+                'ContentColorActive' => false,
+                'ContentColorValue'  => -1,
+            ];
+        };
         $chargingStatePresentation = [
-            'PRESENTATION' => VARIABLE_PRESENTATION_ENUMERATION,
-            'OPTIONS'      => json_encode([
-                ['Value' => 0, 'Caption' => $this->Translate('Disconnected'), 'Icon' => 'Power', 'Color' => 0x808080, 'IconActive' => false],
-                ['Value' => 1, 'Caption' => $this->Translate('Plugged In'), 'Icon' => 'Power', 'Color' => 0xFFAA00, 'IconActive' => false],
-                ['Value' => 2, 'Caption' => $this->Translate('Charging'), 'Icon' => 'Battery', 'Color' => 0x00FF00, 'IconActive' => false],
+            'PRESENTATION'    => VARIABLE_PRESENTATION_VALUE_PRESENTATION,
+            'ICON'            => 'Power',
+            'INTERVALS_ACTIVE' => true,
+            'INTERVALS'       => json_encode([
+                $createInterval(0, 0, $this->Translate('Disconnected'), 0x808080),
+                $createInterval(1, 1, $this->Translate('Plugged In'), 0xFFAA00),
+                $createInterval(2, 2, $this->Translate('Charging'), 0x00FF00),
             ], JSON_UNESCAPED_UNICODE),
         ];
 
@@ -197,6 +220,12 @@ class BluelinkVehicle extends IPSModule
         $this->RegisterVariableString('ErrorText', $this->Translate('Last Error'), [
             'PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION, 'ICON' => 'Warning',
         ], 73);
+        $this->RegisterVariableInteger('CloudRefreshCounter', $this->Translate('Cloud Refresh Counter'), [
+            'PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION, 'ICON' => 'Database',
+        ], 74);
+        $this->RegisterVariableInteger('VehicleRefreshCounter', $this->Translate('Vehicle Refresh Counter'), [
+            'PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION, 'ICON' => 'Car',
+        ], 75);
     }
 
     public function ApplyChanges()
@@ -216,10 +245,14 @@ class BluelinkVehicle extends IPSModule
 
         // Configure poll timer
         $interval = $this->ReadPropertyInteger('PollInterval');
-        if ($interval < 60) {
-            $interval = self::DEFAULT_POLL_INTERVAL;
+        if ($interval === 0) {
+            $this->SetTimerInterval('PollStatus', 0);
+        } else {
+            if ($interval < 60) {
+                $interval = self::DEFAULT_POLL_INTERVAL;
+            }
+            $this->SetTimerInterval('PollStatus', $interval * 1000);
         }
-        $this->SetTimerInterval('PollStatus', $interval * 1000);
 
         // Configure force refresh timer
         $forceInterval = $this->ReadPropertyInteger('ForceRefreshInterval');
@@ -355,6 +388,7 @@ class BluelinkVehicle extends IPSModule
         });
 
         $this->SetBuffer('LastVehicleRefresh', (string) time());
+        $this->SetValue('VehicleRefreshCounter', $this->GetValue('VehicleRefreshCounter') + 1);
     }
 
     public function ForceRefreshStatus(): void
@@ -383,6 +417,7 @@ class BluelinkVehicle extends IPSModule
         });
 
         $this->SetBuffer('LastVehicleRefresh', (string) time());
+        $this->SetValue('VehicleRefreshCounter', $this->GetValue('VehicleRefreshCounter') + 1);
     }
 
     public function RefreshLocation(): void
@@ -538,6 +573,7 @@ class BluelinkVehicle extends IPSModule
         $this->SetValue('ApiOnline', true);
         $this->SetValue('ErrorText', '');
         $this->SetValue('LastUpdateTimestamp', date('d.m.Y H:i:s'));
+        $this->SetValue('CloudRefreshCounter', $this->GetValue('CloudRefreshCounter') + 1);
     }
 
     private function FetchAndApplyLocation(string $vehicleId): void
