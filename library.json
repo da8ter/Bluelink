@@ -3,11 +3,12 @@
     "author": "Stephan Sprick",
     "name": "Bluelink",
     "url": "https://github.com/da8ter/Bluelink",
-    "version": "1.0",
+    "version": "0.1",
     "build": 1,
-    "date": 1741168800,
+    "date": 20260311,
     "compatibility": {
         "version": "8.2",
         "date": 0
     }
 }
+
