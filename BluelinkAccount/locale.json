@@ -11,18 +11,17 @@
             "API Base URL": "API Basis-URL",
             "Client ID": "Client-ID",
             "Basic Token": "Basic Token",
+            "Debug Enabled": "Debug aktiv",
             "Debug": "Debug",
-            "Debug Level": "Debug-Stufe",
-            "Off": "Aus",
-            "Basic": "Einfach",
-            "Verbose": "Ausführlich",
             "Test Login": "Login testen",
             "Load Vehicles": "Fahrzeuge laden",
             "Connected": "Verbunden",
             "Not configured": "Nicht konfiguriert",
             "Authentication failed": "Authentifizierung fehlgeschlagen",
             "API error": "API-Fehler",
-            "Rate limited": "Rate-Limit erreicht"
+            "Rate limited": "Rate-Limit erreicht",
+            "Donation / Gift": "Spenden / Schenkung",
+            "Donation Text": "Sag Danke und unterstütze den Entwickler dieses Moduls:"
         },
         "en": {
             "Credentials": "Credentials",
@@ -35,18 +34,17 @@
             "API Base URL": "API Base URL",
             "Client ID": "Client ID",
             "Basic Token": "Basic Token",
+            "Debug Enabled": "Debug enabled",
             "Debug": "Debug",
-            "Debug Level": "Debug Level",
-            "Off": "Off",
-            "Basic": "Basic",
-            "Verbose": "Verbose",
             "Test Login": "Test Login",
             "Load Vehicles": "Load Vehicles",
             "Connected": "Connected",
             "Not configured": "Not configured",
             "Authentication failed": "Authentication failed",
             "API error": "API error",
-            "Rate limited": "Rate limited"
+            "Rate limited": "Rate limited",
+            "Donation / Gift": "Donation / Gift",
+            "Donation Text": "Say thank you and support the developer of this module:"
         }
     }
 }

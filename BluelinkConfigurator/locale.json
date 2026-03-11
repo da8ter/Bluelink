@@ -8,7 +8,11 @@
             "Model": "Modell",
             "Year": "Baujahr",
             "Active": "Aktiv",
-            "No account connected": "Kein Account verbunden"
+            "No account connected": "Kein Account verbunden",
+            "Debug": "Debug",
+            "Debug Enabled": "Debug aktiv",
+            "Donation / Gift": "Spenden / Schenkung",
+            "Donation Text": "Sag Danke und unterstütze den Entwickler dieses Moduls:"
         },
         "en": {
             "Vehicles": "Vehicles",
@@ -18,7 +22,11 @@
             "Model": "Model",
             "Year": "Year",
             "Active": "Active",
-            "No account connected": "No account connected"
+            "No account connected": "No account connected",
+            "Debug": "Debug",
+            "Debug Enabled": "Debug enabled",
+            "Donation / Gift": "Donation / Gift",
+            "Donation Text": "Say thank you and support the developer of this module:"
         }
     }
 }

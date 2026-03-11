@@ -9,6 +9,9 @@ class BluelinkConfigurator extends IPSModule
         parent::Create();
 
         $this->ConnectParent('{A1B2C3D4-5678-9ABC-DEF0-123456789ABC}');
+
+        $this->RegisterPropertyBoolean('DebugEnabled', false);
+        $this->RegisterPropertyInteger('DebugLevel', 0);
     }
 
     public function ApplyChanges()
@@ -76,6 +79,11 @@ class BluelinkConfigurator extends IPSModule
                 'Command' => 'GetVehicles',
             ]));
 
+            if (!is_string($response) || $response === '') {
+                $this->SendDebug('GetVehicleList', 'Empty/invalid response from parent', 0);
+                return [];
+            }
+
             $data = json_decode($response, true);
             if (($data['success'] ?? false) && !empty($data['vehicles'])) {
                 return $data['vehicles'];
@@ -85,6 +93,23 @@ class BluelinkConfigurator extends IPSModule
         }
 
         return [];
+    }
+
+    protected function SendDebug($Message, $Data, $Format)
+    {
+        $debugEnabled = $this->ReadPropertyBoolean('DebugEnabled');
+        if (!$debugEnabled) {
+            $legacyLevel = 0;
+            try {
+                $legacyLevel = (int) $this->ReadPropertyInteger('DebugLevel');
+            } catch (Throwable $e) {
+                $legacyLevel = 0;
+            }
+            if ($legacyLevel <= 0) {
+                return;
+            }
+        }
+        parent::SendDebug($Message, $Data, $Format);
     }
 
     private function GetExistingVehicleInstances(): array

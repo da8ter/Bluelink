@@ -25,6 +25,7 @@ class BluelinkAccount extends IPSModule
         $this->RegisterPropertyString('BaseURL', self::EU_BASE_URL);
         $this->RegisterPropertyString('ClientID', self::EU_CLIENT_ID);
         $this->RegisterPropertyString('BasicToken', self::EU_BASIC_TOKEN);
+        $this->RegisterPropertyBoolean('DebugEnabled', false);
         $this->RegisterPropertyInteger('DebugLevel', 0);
 
         // Buffers for token cache
@@ -424,6 +425,20 @@ class BluelinkAccount extends IPSModule
 
     protected function SendDebug($Message, $Data, $Format)
     {
+        $debugEnabled = $this->ReadPropertyBoolean('DebugEnabled');
+        if (!$debugEnabled) {
+            // Legacy-Compat: falls DebugEnabled noch nicht gespeichert ist
+            $legacyLevel = 0;
+            try {
+                $legacyLevel = (int) $this->ReadPropertyInteger('DebugLevel');
+            } catch (Throwable $e) {
+                $legacyLevel = 0;
+            }
+            if ($legacyLevel <= 0) {
+                return;
+            }
+        }
+
         // Mask secrets in debug output
         $maskedData = $Data;
         if (is_string($maskedData)) {

@@ -26,6 +26,7 @@ class BluelinkVehicle extends IPSModule
         $this->RegisterPropertyBoolean('RefreshOnAction', false);
         $this->RegisterPropertyBoolean('ChargingPollEnabled', false);
         $this->RegisterPropertyInteger('ChargingPollInterval', self::DEFAULT_CHARGING_POLL_INTERVAL);
+        $this->RegisterPropertyBoolean('DebugEnabled', false);
         $this->RegisterPropertyInteger('DebugLevel', 0);
 
         // Buffers
@@ -38,6 +39,7 @@ class BluelinkVehicle extends IPSModule
         $this->RegisterTimer('PollStatus', 0, 'BL_UpdateStatus($_IPS[\'TARGET\']);');
         $this->RegisterTimer('ForceRefreshStatus', 0, 'BL_ForceRefreshStatus($_IPS[\'TARGET\']);');
         $this->RegisterTimer('PollCommand', 0, 'BL_PollCommand($_IPS[\'TARGET\']);');
+        $this->RegisterTimer('RefreshAfterCommand', 0, 'BL_RefreshAfterCommand($_IPS[\'TARGET\']);');
 
         $createValuePresentationEntry = static function ($value, string $caption): array {
             return [
@@ -155,23 +157,14 @@ class BluelinkVehicle extends IPSModule
             'COLOR_TRUE' => 0x00FF00, 'COLOR_FALSE' => 0x808080,
         ], 40);
         $this->EnableAction('ClimateOn');
-        $this->RegisterVariableFloat('TargetTempC', $this->Translate('Target Temperature'), '', 41);
-        IPS_SetVariableCustomPresentation($this->GetIDForIdent('TargetTempC'), [
+        $this->RegisterVariableFloat('TargetTempC', $this->Translate('Target Temperature'), [
             'PRESENTATION' => VARIABLE_PRESENTATION_SLIDER,
             'ICON' => 'Temperature', 'SUFFIX' => ' °C',
             'MIN' => 14.0, 'MAX' => 30.0, 'STEP' => 0.5, 'DIGITS' => 1,
-        ]);
+        ], 41);
         $this->EnableAction('TargetTempC');
-        $this->RegisterVariableBoolean('Defrost', $this->Translate('Defrost'), [
-            'PRESENTATION' => VARIABLE_PRESENTATION_SWITCH,
-            'CAPTION_TRUE' => $this->Translate('On'), 'CAPTION_FALSE' => $this->Translate('Off'),
-            'COLOR_TRUE' => 0x00FF00, 'COLOR_FALSE' => 0x808080,
-        ], 42);
-        $this->RegisterVariableBoolean('SteeringHeat', $this->Translate('Steering Wheel Heating'), [
-            'PRESENTATION' => VARIABLE_PRESENTATION_SWITCH,
-            'CAPTION_TRUE' => $this->Translate('On'), 'CAPTION_FALSE' => $this->Translate('Off'),
-            'COLOR_TRUE' => 0x00FF00, 'COLOR_FALSE' => 0x808080,
-        ], 43);
+        $this->RegisterVariableBoolean('Defrost', $this->Translate('Defrost'), $yesNoPresentation, 42);
+        $this->RegisterVariableBoolean('SteeringHeat', $this->Translate('Steering Wheel Heating'), $yesNoPresentation, 43);
 
         // ── Variables: Charging Action ──────────────────────────────
         $this->RegisterVariableBoolean('ChargeAction', $this->Translate('Charging'), [
@@ -212,10 +205,11 @@ class BluelinkVehicle extends IPSModule
             'PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION, 'ICON' => 'Clock',
         ], 71);
         $this->RegisterVariableBoolean('ApiOnline', $this->Translate('API Online'), [
-            'PRESENTATION' => VARIABLE_PRESENTATION_SWITCH,
-            'ICON_TRUE' => 'Ok', 'ICON_FALSE' => 'Warning',
-            'CAPTION_TRUE' => $this->Translate('Online'), 'CAPTION_FALSE' => $this->Translate('Offline'),
-            'COLOR_TRUE' => 0x00FF00, 'COLOR_FALSE' => 0xFF0000,
+            'PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION,
+            'OPTIONS'      => json_encode([
+                $createValuePresentationEntry(false, $this->Translate('Offline')),
+                $createValuePresentationEntry(true, $this->Translate('Online')),
+            ], JSON_UNESCAPED_UNICODE),
         ], 72);
         $this->RegisterVariableString('ErrorText', $this->Translate('Last Error'), [
             'PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION, 'ICON' => 'Warning',
@@ -226,6 +220,23 @@ class BluelinkVehicle extends IPSModule
         $this->RegisterVariableInteger('VehicleRefreshCounter', $this->Translate('Vehicle Refresh Counter'), [
             'PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION, 'ICON' => 'Car',
         ], 75);
+    }
+
+    protected function SendDebug($Message, $Data, $Format)
+    {
+        $debugEnabled = $this->ReadPropertyBoolean('DebugEnabled');
+        if (!$debugEnabled) {
+            $legacyLevel = 0;
+            try {
+                $legacyLevel = (int) $this->ReadPropertyInteger('DebugLevel');
+            } catch (Throwable $e) {
+                $legacyLevel = 0;
+            }
+            if ($legacyLevel <= 0) {
+                return;
+            }
+        }
+        parent::SendDebug($Message, $Data, $Format);
     }
 
     public function ApplyChanges()
@@ -514,6 +525,12 @@ class BluelinkVehicle extends IPSModule
         }
     }
 
+    public function RefreshAfterCommand(): void
+    {
+        $this->SetTimerInterval('RefreshAfterCommand', 0);
+        $this->UpdateStatus();
+    }
+
     public function PollCommand(): void
     {
         $commandState = json_decode($this->GetBuffer('CommandState'), true);
@@ -548,9 +565,7 @@ class BluelinkVehicle extends IPSModule
             $this->SendDebug('PollCommand', 'Command completed: ' . ($commandState['type'] ?? ''), 0);
 
             if ($this->ReadPropertyBoolean('RefreshOnAction')) {
-                // Wait briefly then refresh status
-                IPS_Sleep(2000);
-                $this->UpdateStatus();
+                $this->SetTimerInterval('RefreshAfterCommand', 2000);
             }
         }
     }

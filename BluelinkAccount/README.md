@@ -20,7 +20,7 @@ Splitter-Modul für die Hyundai Bluelink EU API. Verwaltet:
 
 ## Modul-URL
 
-`https://github.com/ssp/Bluelink`
+`https://github.com/da8ter/Bluelink`
 
 ## Einstellungen
 
@@ -32,7 +32,7 @@ Splitter-Modul für die Hyundai Bluelink EU API. Verwaltet:
 | Base URL | string | API-Endpunkt |
 | Client ID | string | OAuth2 Client-ID |
 | Basic Token | string | OAuth2 Basic-Token |
-| Debug Level | select | Off / Basic / Verbose |
+| Debug Enabled | bool | Debug-Ausgabe aktivieren |
 
 ## PHP-Befehle
 
