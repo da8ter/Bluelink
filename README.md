@@ -8,9 +8,9 @@ Liest Fahrzeugdaten und steuert Remote-Aktionen über die Hyundai Bluelink / Kia
 
 | Modul | Beschreibung |
 |-------|-------------|
-| [Bluelink Account](BluelinkAccount/README.md) | Splitter – Verwaltet Anmeldedaten, Tokens und API-Kommunikation |
-| [Bluelink Configurator](BluelinkConfigurator/README.md) | Konfigurator – Zeigt Fahrzeugliste und erstellt Fahrzeug-Instanzen |
-| [Bluelink Vehicle](BluelinkVehicle/README.md) | Gerät – Status, Standort und Remote-Aktionen pro Fahrzeug |
+| [Hyundai Bluelink Kia Connect Account](BluelinkAccount/README.md) | Splitter – Verwaltet Anmeldedaten, Tokens und API-Kommunikation |
+| [Hyundai Bluelink Kia Connect Configurator](BluelinkConfigurator/README.md) | Konfigurator – Zeigt Fahrzeugliste und erstellt Fahrzeug-Instanzen |
+| [Hyundai Bluelink Kia Connect Vehicle](BluelinkVehicle/README.md) | Gerät – Status, Standort und Remote-Aktionen pro Fahrzeug |
 
 ## Voraussetzungen
 
