@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 class BluelinkStampService
 {
-    // Hyundai EU CFB key (from hyundai_kia_connect_api Python project)
-    private const HYUNDAI_CFB_B64 = 'RFtoRq/vDXJmRndoZaZQyfOot7OrIqGVFj96iY2WL3yyH5Z/pUvlUhqmCxD2t+D65SQ=';
-    private const APP_ID = '014d2225-8495-4735-812d-2616334fd15d';
-
     private string $cfb;
+    private string $appId;
 
-    public function __construct(string $stampUrl = '')
+    public function __construct(string $cfbKeyBase64 = '', string $appId = '')
     {
-        $this->cfb = base64_decode(self::HYUNDAI_CFB_B64);
+        $defaultCfb = 'RFtoRq/vDXJmRndoZaZQyfOot7OrIqGVFj96iY2WL3yyH5Z/pUvlUhqmCxD2t+D65SQ=';
+        $defaultAppId = '014d2225-8495-4735-812d-2616334fd15d';
+        $this->cfb = base64_decode(!empty($cfbKeyBase64) ? $cfbKeyBase64 : $defaultCfb);
+        $this->appId = !empty($appId) ? $appId : $defaultAppId;
     }
 
     /**
@@ -23,7 +23,7 @@ class BluelinkStampService
     public function getStamp(): string
     {
         $timestamp = (string) time();
-        $rawData = self::APP_ID . ':' . $timestamp;
+        $rawData = $this->appId . ':' . $timestamp;
 
         $len = min(strlen($rawData), strlen($this->cfb));
         $result = '';

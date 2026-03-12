@@ -5,13 +5,14 @@ declare(strict_types=1);
 class BluelinkAuthService
 {
     private const TOKEN_EXPIRY_BUFFER = 60; // seconds before expiry to refresh
-    private const APP_ID = '014d2225-8495-4735-812d-2616334fd15d';
-    private const PUSH_TYPE = 'GCM';
 
     private string $baseUrl;
     private string $clientId;
     private string $basicToken;
     private BluelinkStampService $stampService;
+    private string $appId;
+    private string $pushType;
+    private string $host;
 
     private string $accessToken = '';
     private string $refreshToken = '';
@@ -26,12 +27,19 @@ class BluelinkAuthService
         string $baseUrl,
         string $clientId,
         string $basicToken,
-        BluelinkStampService $stampService
+        BluelinkStampService $stampService,
+        string $appId = '014d2225-8495-4735-812d-2616334fd15d',
+        string $pushType = 'GCM'
     ) {
         $this->baseUrl = $baseUrl;
         $this->clientId = $clientId;
         $this->basicToken = $basicToken;
         $this->stampService = $stampService;
+        $this->appId = $appId;
+        $this->pushType = $pushType;
+        // Derive host from baseUrl (strip scheme)
+        $parsed = parse_url($baseUrl);
+        $this->host = ($parsed['host'] ?? 'prd.eu-ccapi.hyundai.com') . ':' . ($parsed['port'] ?? 8080);
     }
 
     public function setLogger(callable $logger): void
@@ -134,10 +142,10 @@ class BluelinkAuthService
         $headers = [
             'Authorization: Bearer ' . $this->getAccessToken(),
             'ccsp-device-id: ' . $deviceId,
-            'ccsp-application-id: ' . self::APP_ID,
+            'ccsp-application-id: ' . $this->appId,
             'Stamp: ' . $stamp,
             'Content-Type: application/json',
-            'Host: prd.eu-ccapi.hyundai.com:8080',
+            'Host: ' . $this->host,
             'Connection: Keep-Alive',
             'Accept-Encoding: gzip',
             'Ccuccs2protocolsupport: ' . $ccs2Support,
@@ -222,16 +230,16 @@ class BluelinkAuthService
 
         $payload = json_encode([
             'pushRegId' => $registrationId,
-            'pushType'  => self::PUSH_TYPE,
+            'pushType'  => $this->pushType,
             'uuid'      => $uuid,
         ]);
 
         $headers = [
             'ccsp-service-id: ' . $this->clientId,
-            'ccsp-application-id: ' . self::APP_ID,
+            'ccsp-application-id: ' . $this->appId,
             'Stamp: ' . $stamp,
             'Content-Type: application/json;charset=UTF-8',
-            'Host: prd.eu-ccapi.hyundai.com:8080',
+            'Host: ' . $this->host,
             'Connection: Keep-Alive',
             'Accept-Encoding: gzip',
             'User-Agent: okhttp/3.12.0',

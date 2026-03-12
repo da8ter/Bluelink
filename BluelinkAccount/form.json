@@ -1,6 +1,15 @@
 {
     "elements": [
         {
+            "type": "Select",
+            "name": "Brand",
+            "caption": "Brand",
+            "options": [
+                { "caption": "Hyundai (Bluelink)", "value": "Hyundai" },
+                { "caption": "Kia (Kia Connect)", "value": "Kia" }
+            ]
+        },
+        {
             "type": "ExpansionPanel",
             "caption": "Credentials",
             "items": [
@@ -17,37 +26,6 @@
                 {
                     "type": "Label",
                     "caption": "The refresh token is the recommended authentication method. See README for instructions."
-                }
-            ]
-        },
-        {
-            "type": "ExpansionPanel",
-            "caption": "Region & Endpoints",
-            "items": [
-                {
-                    "type": "Select",
-                    "name": "Region",
-                    "caption": "Region",
-                    "options": [
-                        { "caption": "Europe (EU)", "value": "EU" }
-                    ]
-                },
-                {
-                    "type": "ValidationTextBox",
-                    "name": "BaseURL",
-                    "caption": "API Base URL",
-                    "enabled": false
-                },
-                {
-                    "type": "ValidationTextBox",
-                    "name": "ClientID",
-                    "caption": "Client ID",
-                    "enabled": false
-                },
-                {
-                    "type": "PasswordTextBox",
-                    "name": "BasicToken",
-                    "caption": "Basic Token"
                 }
             ]
         },

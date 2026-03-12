@@ -2,7 +2,9 @@
 
 ## Funktionsumfang
 
-Konfigurator-Modul zur Verwaltung der Fahrzeug-Instanzen. Zeigt alle im Bluelink-Account registrierten Fahrzeuge an und ermöglicht das Erstellen/Löschen von Fahrzeug-Instanzen.
+Konfigurator-Modul zur Verwaltung der Fahrzeug-Instanzen. Zeigt alle im Bluelink-/Kia-Connect-Account registrierten Fahrzeuge an und ermöglicht das Erstellen/Löschen von Fahrzeug-Instanzen.
+
+Die Marke (Hyundai/Kia) wird automatisch vom verbundenen Account-Modul erkannt und im Instanznamen der erstellten Fahrzeuge verwendet.
 
 ## Voraussetzungen
 
@@ -12,6 +14,7 @@ Konfigurator-Modul zur Verwaltung der Fahrzeug-Instanzen. Zeigt alle im Bluelink
 ## Kompatibilität
 
 - Hyundai Bluelink EU
+- Kia Connect EU
 
 ## Modul-URL
 

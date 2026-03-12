@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/../libs/BrandConfig.php';
 require_once __DIR__ . '/../libs/BluelinkStampService.php';
 require_once __DIR__ . '/../libs/BluelinkAuthService.php';
 require_once __DIR__ . '/../libs/BluelinkApiClient.php';
@@ -10,21 +11,16 @@ require_once __DIR__ . '/../libs/CommandService.php';
 
 class BluelinkAccount extends IPSModule
 {
-    private const EU_BASE_URL = 'https://prd.eu-ccapi.hyundai.com:8080';
-    private const EU_CLIENT_ID = '6d477c38-3ca4-4cf3-9557-2a1929a94654';
-    private const EU_BASIC_TOKEN = 'Basic NmQ0NzdjMzgtM2NhNC00Y2YzLTk1NTctMmExOTI5YTk0NjU0OktVeTQ5WHhQekxwTHVvSzB4aEJDNzdXNlZYaG10UVI5aVFobUlGampvWTRJcHhzVg==';
 
     public function Create()
     {
         parent::Create();
 
         // Properties
+        $this->RegisterPropertyString('Brand', BrandConfig::BRAND_HYUNDAI);
         $this->RegisterPropertyString('PIN', '');
         $this->RegisterPropertyString('RefreshToken', '');
         $this->RegisterPropertyString('Region', 'EU');
-        $this->RegisterPropertyString('BaseURL', self::EU_BASE_URL);
-        $this->RegisterPropertyString('ClientID', self::EU_CLIENT_ID);
-        $this->RegisterPropertyString('BasicToken', self::EU_BASIC_TOKEN);
         $this->RegisterPropertyBoolean('DebugEnabled', false);
         $this->RegisterPropertyInteger('DebugLevel', 0);
 
@@ -62,6 +58,9 @@ class BluelinkAccount extends IPSModule
         switch ($command) {
             case 'GetVehicles':
                 return $this->GetVehicleListJSON();
+
+            case 'GetBrand':
+                return json_encode(['success' => true, 'brand' => $this->ReadPropertyString('Brand')]);
 
             case 'HasPIN':
                 return json_encode(['success' => true, 'hasPIN' => !empty($this->ReadPropertyString('PIN'))]);
@@ -340,19 +339,27 @@ class BluelinkAccount extends IPSModule
 
     // ── Service factories ───────────────────────────────────────────
 
+    private function getBrandConfig(): array
+    {
+        $brand = $this->ReadPropertyString('Brand');
+        return BrandConfig::get($brand);
+    }
+
     private function createStampService(): BluelinkStampService
     {
-        return new BluelinkStampService();
+        $config = $this->getBrandConfig();
+        return new BluelinkStampService($config['cfbKey'], $config['appId']);
     }
 
     private function createAuthService(): BluelinkAuthService
     {
-        $baseUrl = $this->ReadPropertyString('BaseURL');
-        $clientId = $this->ReadPropertyString('ClientID');
-        $basicToken = $this->ReadPropertyString('BasicToken');
+        $config = $this->getBrandConfig();
+        $baseUrl = $config['baseUrl'];
+        $clientId = $config['clientId'];
+        $basicToken = $config['basicToken'];
         $stampService = $this->createStampService();
 
-        $auth = new BluelinkAuthService($baseUrl, $clientId, $basicToken, $stampService);
+        $auth = new BluelinkAuthService($baseUrl, $clientId, $basicToken, $stampService, $config['appId'], $config['pushType']);
 
         // Wire up logging
         $auth->setLogger(function (string $message) {
@@ -379,7 +386,8 @@ class BluelinkAccount extends IPSModule
     private function createApiClientWithAuth(): array
     {
         $auth = $this->createAuthService();
-        $baseUrl = $this->ReadPropertyString('BaseURL');
+        $config = $this->getBrandConfig();
+        $baseUrl = $config['baseUrl'];
         $client = new BluelinkApiClient($baseUrl, $auth);
         $client->setLogger(function (string $message) {
             $this->SendDebug('API', $message, 0);
@@ -418,7 +426,8 @@ class BluelinkAccount extends IPSModule
     private function hasValidConfig(): bool
     {
         $refreshToken = $this->ReadPropertyString('RefreshToken');
-        return !empty($refreshToken);
+        $brand = $this->ReadPropertyString('Brand');
+        return !empty($refreshToken) && in_array($brand, BrandConfig::getBrands());
     }
 
     // ── Debug with secret masking ───────────────────────────────────

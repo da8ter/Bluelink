@@ -2,7 +2,7 @@
 
 ## Funktionsumfang
 
-Device-Modul für ein einzelnes Hyundai-Fahrzeug. Pro Fahrzeug wird eine Instanz erstellt (über den Konfigurator).
+Device-Modul für ein einzelnes Hyundai- oder Kia-Fahrzeug. Pro Fahrzeug wird eine Instanz erstellt (über den Konfigurator).
 
 Funktionen:
 - Automatischer Statusabruf (Cloud) alle 300 Sekunden (konfigurierbar)
@@ -14,11 +14,12 @@ Funktionen:
 ## Voraussetzungen
 
 - IP-Symcon >= 8.2
-- Bluelink Account Instanz (konfiguriert und verbunden)
+- Bluelink / Kia Connect Account Instanz (konfiguriert und verbunden)
 
 ## Kompatibilität
 
 - Hyundai Bluelink EU (EV und Verbrenner)
+- Kia Connect EU (EV und Verbrenner)
 
 ## Modul-URL
 

@@ -2,7 +2,7 @@
 
 ## Funktionsumfang
 
-Splitter-Modul für die Hyundai Bluelink EU API. Verwaltet:
+Splitter-Modul für die Hyundai Bluelink / Kia Connect EU API. Verwaltet:
 
 - Anmeldedaten und OAuth2-Token (Access + Refresh)
 - API-Stamps für die EU-Region
@@ -12,11 +12,12 @@ Splitter-Modul für die Hyundai Bluelink EU API. Verwaltet:
 ## Voraussetzungen
 
 - IP-Symcon >= 8.2
-- Hyundai Bluelink Account (EU)
+- Hyundai Bluelink oder Kia Connect Account (EU)
 
 ## Kompatibilität
 
 - Hyundai Bluelink EU
+- Kia Connect EU
 
 ## Modul-URL
 
@@ -26,13 +27,12 @@ Splitter-Modul für die Hyundai Bluelink EU API. Verwaltet:
 
 | Eigenschaft | Typ | Beschreibung |
 |-------------|-----|-------------|
+| Brand | select | Marke (Hyundai / Kia) |
 | PIN | string | 4-stelliger PIN für Remote-Aktionen |
 | Refresh Token | string | OAuth2 Refresh Token (empfohlen) |
-| Region | select | Region (aktuell nur EU) |
-| Base URL | string | API-Endpunkt |
-| Client ID | string | OAuth2 Client-ID |
-| Basic Token | string | OAuth2 Basic-Token |
 | Debug Enabled | bool | Debug-Ausgabe aktivieren |
+
+> Für beide Marken gleichzeitig: Zwei Account-Instanzen erstellen (eine pro Marke).
 
 ## PHP-Befehle
 

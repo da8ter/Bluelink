@@ -38,6 +38,7 @@ class BluelinkConfigurator extends IPSModule
         $form = json_decode(file_get_contents(__DIR__ . '/form.json'), true);
 
         $vehicles = $this->GetVehicleList();
+        $brand = $this->GetParentBrand();
         $existingInstances = $this->GetExistingVehicleInstances();
 
         $values = [];
@@ -59,7 +60,7 @@ class BluelinkConfigurator extends IPSModule
                         'VIN'       => $vin,
                         'VehicleId' => $vehicleId,
                     ],
-                    'name' => 'Bluelink ' . ($vehicle['VehicleName'] ?? $vin),
+                    'name' => $brand . ' ' . ($vehicle['VehicleName'] ?? $vin),
                 ],
             ];
         }
@@ -70,6 +71,25 @@ class BluelinkConfigurator extends IPSModule
     }
 
     // ── Private methods ─────────────────────────────────────────────
+
+    private function GetParentBrand(): string
+    {
+        try {
+            $response = $this->SendDataToParent(json_encode([
+                'DataID'  => '{D7F8E9A0-B1C2-3D4E-5F6A-7B8C9D0E1F2A}',
+                'Command' => 'GetBrand',
+            ]));
+            if (is_string($response) && $response !== '') {
+                $data = json_decode($response, true);
+                if (($data['success'] ?? false) && !empty($data['brand'])) {
+                    return $data['brand'];
+                }
+            }
+        } catch (Exception $e) {
+            $this->SendDebug('GetParentBrand', 'Error: ' . $e->getMessage(), 0);
+        }
+        return 'Bluelink';
+    }
 
     private function GetVehicleList(): array
     {
