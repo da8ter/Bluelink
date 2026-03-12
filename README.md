@@ -1,4 +1,4 @@
-# Bluelink / Kia Connect – Symcon Anbindung
+# Hyundai Bluelink / Kia Connect – Symcon Anbindung
 
 Hyundai Bluelink & Kia Connect Integration für Symcon 8.2 (9.0) (EU-Region).
 
