@@ -1,0 +1,44 @@
+{
+    "translations": {
+        "de": {
+            "Brand": "Marke",
+            "Hyundai (Bluelink)": "Hyundai (Bluelink)",
+            "Kia (Kia Connect)": "Kia (Kia Connect)",
+            "Credentials": "Anmeldedaten",
+            "PIN (4 digits)": "PIN (4-stellig)",
+            "Refresh Token (recommended)": "Refresh Token (empfohlen)",
+            "The refresh token is the recommended authentication method. See README for instructions.": "Der Refresh Token ist die empfohlene Authentifizierungsmethode. Siehe README für Anleitung.",
+            "Debug Enabled": "Debug aktiv",
+            "Debug": "Debug",
+            "Test Login": "Login testen",
+            "Load Vehicles": "Fahrzeuge laden",
+            "Connected": "Verbunden",
+            "Not configured": "Nicht konfiguriert",
+            "Authentication failed": "Authentifizierung fehlgeschlagen",
+            "API error": "API-Fehler",
+            "Rate limited": "Rate-Limit erreicht",
+            "Donation / Gift": "Spenden / Schenkung",
+            "Donation Text": "Sag Danke und unterstütze den Entwickler dieses Moduls:"
+        },
+        "en": {
+            "Brand": "Brand",
+            "Hyundai (Bluelink)": "Hyundai (Bluelink)",
+            "Kia (Kia Connect)": "Kia (Kia Connect)",
+            "Credentials": "Credentials",
+            "PIN (4 digits)": "PIN (4 digits)",
+            "Refresh Token (recommended)": "Refresh Token (recommended)",
+            "The refresh token is the recommended authentication method. See README for instructions.": "The refresh token is the recommended authentication method. See README for instructions.",
+            "Debug Enabled": "Debug enabled",
+            "Debug": "Debug",
+            "Test Login": "Test Login",
+            "Load Vehicles": "Load Vehicles",
+            "Connected": "Connected",
+            "Not configured": "Not configured",
+            "Authentication failed": "Authentication failed",
+            "API error": "API error",
+            "Rate limited": "Rate limited",
+            "Donation / Gift": "Donation / Gift",
+            "Donation Text": "Say thank you and support the developer of this module:"
+        }
+    }
+}

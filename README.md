@@ -8,9 +8,9 @@ Liest Fahrzeugdaten und steuert Remote-Aktionen über die Hyundai Bluelink / Kia
 
 | Modul | Beschreibung |
 |-------|-------------|
-| [Hyundai Bluelink Kia Connect Account](BluelinkAccount/README.md) | Splitter – Verwaltet Anmeldedaten, Tokens und API-Kommunikation |
-| [Hyundai Bluelink Kia Connect Configurator](BluelinkConfigurator/README.md) | Konfigurator – Zeigt Fahrzeugliste und erstellt Fahrzeug-Instanzen |
-| [Hyundai Bluelink Kia Connect Vehicle](BluelinkVehicle/README.md) | Gerät – Status, Standort und Remote-Aktionen pro Fahrzeug |
+| [Hyundai Bluelink Kia Connect Account](HyundaiBluelinkKiaConnectAccount/README.md) | Splitter – Verwaltet Anmeldedaten, Tokens und API-Kommunikation |
+| [Hyundai Bluelink Kia Connect Configurator](HyundaiBluelinkKiaConnectConfigurator/README.md) | Konfigurator – Zeigt Fahrzeugliste und erstellt Fahrzeug-Instanzen |
+| [Hyundai Bluelink Kia Connect Vehicle](HyundaiBluelinkKiaConnectVehicle/README.md) | Gerät – Status, Standort und Remote-Aktionen pro Fahrzeug |
 
 ## Voraussetzungen
 
@@ -62,20 +62,20 @@ Neuere Hyundai- und Kia-Fahrzeuge nutzen das **CCS2-Protokoll** (Connected Car S
 ## Architektur
 
 ```
-BluelinkAccount (Splitter, Brand=Hyundai)
-    ├── BluelinkConfigurator (Configurator)
-    └── BluelinkVehicle (Device) × n
+HyundaiBluelinkKiaConnectAccount (Splitter, Brand=Hyundai)
+    ├── HyundaiBluelinkKiaConnectConfigurator (Configurator)
+    └── HyundaiBluelinkKiaConnectVehicle (Device) × n
 
-BluelinkAccount (Splitter, Brand=Kia)
-    ├── BluelinkConfigurator (Configurator)
-    └── BluelinkVehicle (Device) × n
+HyundaiBluelinkKiaConnectAccount (Splitter, Brand=Kia)
+    ├── HyundaiBluelinkKiaConnectConfigurator (Configurator)
+    └── HyundaiBluelinkKiaConnectVehicle (Device) × n
 ```
 
 Jede Account-Instanz verwaltet eine Marke. Für beide Marken gleichzeitig werden zwei Account-Instanzen erstellt.
 
 Die Kommunikation läuft über den offiziellen IP-Symcon Datenfluss (`SendDataToParent` / `ForwardData`).
 
-## Darstellungen (BluelinkVehicle)
+## Darstellungen (Vehicle)
 
 - `DoorsLocked` wird als **schaltbare Aufzählung** mit den Texten **Locked/Unlocked** dargestellt, damit Symcon nicht **On/Off** verwendet.
 - Tür-/Fensterstatus werden als **Wertanzeige** auf `bool` modelliert und mit den Texten **Open/Closed** dargestellt.
