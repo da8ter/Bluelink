@@ -280,11 +280,19 @@ class BluelinkAuthService
             'redirect_uri'  => $this->baseUrl . '/api/v1/user/oauth2/redirect',
         ]);
 
+        $stamp = $this->stampService->getStamp();
         $this->log('RefreshToken POST ' . $tokenUrl);
 
         $response = $this->httpPost($tokenUrl, $payload, [
             'Authorization: ' . $this->basicToken,
             'Content-Type: application/x-www-form-urlencoded',
+            'Host: ' . $this->host,
+            'Stamp: ' . $stamp,
+            'ccsp-service-id: ' . $this->clientId,
+            'ccsp-application-id: ' . $this->appId,
+            'Connection: Keep-Alive',
+            'Accept-Encoding: gzip',
+            'User-Agent: okhttp/3.12.0',
         ]);
 
         $statusCode = $this->parseStatusCode($response['headers'] ?? []);
@@ -318,10 +326,18 @@ class BluelinkAuthService
             'code'         => $code,
         ]);
 
+        $stamp = $this->stampService->getStamp();
         $this->log('TokenExchange POST ' . $tokenUrl);
         $response = $this->httpPost($tokenUrl, $payload, [
             'Authorization: ' . $this->basicToken,
             'Content-Type: application/x-www-form-urlencoded',
+            'Host: ' . $this->host,
+            'Stamp: ' . $stamp,
+            'ccsp-service-id: ' . $this->clientId,
+            'ccsp-application-id: ' . $this->appId,
+            'Connection: Keep-Alive',
+            'Accept-Encoding: gzip',
+            'User-Agent: okhttp/3.12.0',
         ]);
 
         $statusCode = $this->parseStatusCode($response['headers'] ?? []);
