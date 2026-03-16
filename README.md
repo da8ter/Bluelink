@@ -43,7 +43,7 @@ HYUNDAI:
 
 KIA:
 
-1. Refresh Token extern erzeugen (z.B. über das [hyundai_kia_connect_api](https://github.com/smalarz/kia-token-generator) Python-Script)
+1. Refresh Token extern erzeugen (z.B. über das [Kia Token Generator](https://github.com/smalarz/kia-token-generator) Python-Script)
 2. Token im Account-Modul unter **Refresh Token** eintragen
 3. Login testen
 
