@@ -31,11 +31,19 @@ Liest Fahrzeugdaten und steuert Remote-Aktionen über die Hyundai Bluelink / Kia
 
 ## Authentifizierung
 
-### Refresh Token (empfohlen)
+### Refresh Token
 
 Hyundai und Kia EU verwenden reCAPTCHA beim Login, was eine automatische Anmeldung erschwert. Der **Refresh Token** ist daher die zuverlässigste Methode:
 
+HYUNDAI:
+
 1. Refresh Token extern erzeugen (z.B. über das [hyundai_kia_connect_api](https://github.com/Hyundai-Kia-Connect/hyundai_kia_connect_api/tree/master/Hyundai%20Token%20Solution) Python-Script)
+2. Token im Account-Modul unter **Refresh Token** eintragen
+3. Login testen
+
+KIA:
+
+1. Refresh Token extern erzeugen (z.B. über das [hyundai_kia_connect_api](https://github.com/smalarz/kia-token-generator) Python-Script)
 2. Token im Account-Modul unter **Refresh Token** eintragen
 3. Login testen
 
