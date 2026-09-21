@@ -29,13 +29,8 @@
                     "caption": "PIN (4 digits)"
                 },
                 {
-                    "type": "PasswordTextBox",
-                    "name": "RefreshToken",
-                    "caption": "Legacy refresh token (optional)"
-                },
-                {
                     "type": "Label",
-                    "caption": "Email and password are required for current Hyundai/Kia OneApp authentication. A legacy 48-character refresh token can still be used without credentials."
+                    "caption": "Email and password are used for current Hyundai/Kia OneApp authentication. Tokens are managed automatically by the module."
                 }
             ]
         },
