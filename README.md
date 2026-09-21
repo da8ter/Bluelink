@@ -16,14 +16,15 @@ Liest Fahrzeugdaten und steuert Remote-Aktionen über die Hyundai Bluelink / Kia
 
 - IP-Symcon >= 8.2 (9.0)
 - Hyundai Bluelink oder Kia Connect Account (EU)
-- Refresh Token (empfohlen)
+- Hyundai/Kia Account-E-Mail und Passwort
+- Optional: alter 48-stelliger Refresh Token
 - PIN (4-stellig) für Remote-Aktionen
 
 ## Installation
 
 1. Im IP-Symcon **Objektbaum** → **Kern Instanzen** → **Module Control** öffnen
 2. URL hinzufügen: `https://github.com/da8ter/Bluelink`
-3. **Bluelink Account** Instanz erstellen, **Marke** (Hyundai/Kia) wählen und Refresh Token eintragen
+3. **Bluelink Account** Instanz erstellen, **Marke** (Hyundai/Kia) wählen und Account-E-Mail/Passwort eintragen
 4. **Bluelink Configurator** Instanz erstellen (verbindet sich automatisch mit dem Account)
 5. Im Konfigurator die gewünschten Fahrzeuge als Instanzen anlegen
 
@@ -31,21 +32,20 @@ Liest Fahrzeugdaten und steuert Remote-Aktionen über die Hyundai Bluelink / Kia
 
 ## Authentifizierung
 
-### Refresh Token
+### OneApp/CCI-Anmeldung
 
-Hyundai und Kia EU verwenden reCAPTCHA beim Login, was eine automatische Anmeldung erschwert. Der **Refresh Token** ist daher die zuverlässigste Methode:
+Hyundai und Kia EU verwenden inzwischen den OneApp/CCI-Login. Im Account-Modul werden dazu die E-Mail-Adresse und das Passwort des Hyundai-/Kia-Kontos hinterlegt. Das Modul verschlüsselt das Passwort mit dem jeweils aktuell vom Hersteller gelieferten RSA-Schlüssel, bezieht den vollständigen CCI-Token-Satz und tauscht ihn gegen ein CCS-Zugriffstoken für die Fahrzeug-API.
 
-HYUNDAI:
+1. Marke auswählen
+2. Account-E-Mail und Passwort eintragen
+3. Optional die vierstellige PIN für Remote-Aktionen eintragen
+4. Änderungen übernehmen und **Login testen**
 
-1. Refresh Token extern erzeugen (z.B. über das [hyundai_kia_connect_api](https://github.com/Hyundai-Kia-Connect/hyundai_kia_connect_api/tree/master/Hyundai%20Token%20Solution) Python-Script)
-2. Token im Account-Modul unter **Refresh Token** eintragen
-3. Login testen
+Access-, Refresh- und Begleittokens werden im Instanzpuffer gespeichert und automatisch erneuert. Das Passwort wird nicht in Debug-Ausgaben geschrieben.
 
-KIA:
+### Alte Refresh Tokens
 
-1. Refresh Token extern erzeugen (z.B. über das [Kia Token Generator](https://github.com/smalarz/kia-token-generator) Python-Script)
-2. Token im Account-Modul unter **Refresh Token** eintragen
-3. Login testen
+Ein alter, 48-stelliger OAuth-Refresh-Token kann weiterhin ohne E-Mail/Passwort verwendet werden. Die von aktuellen Token-Generatoren ausgegebenen 87-stelligen CCI-Refresh-Tokens sind allein nicht verwendbar, da die Hersteller-API zusätzlich mehrere Begleittokens verlangt. Für diese Tokens müssen E-Mail und Passwort konfiguriert werden; das Feld **Alter Refresh Token** kann leer bleiben.
 
 ## CCS2-Protokoll
 

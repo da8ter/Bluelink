@@ -14,6 +14,16 @@
             "caption": "Credentials",
             "items": [
                 {
+                    "type": "ValidationTextBox",
+                    "name": "Username",
+                    "caption": "Account email"
+                },
+                {
+                    "type": "PasswordTextBox",
+                    "name": "Password",
+                    "caption": "Account password"
+                },
+                {
                     "type": "PasswordTextBox",
                     "name": "PIN",
                     "caption": "PIN (4 digits)"
@@ -21,11 +31,11 @@
                 {
                     "type": "PasswordTextBox",
                     "name": "RefreshToken",
-                    "caption": "Refresh Token (recommended)"
+                    "caption": "Legacy refresh token (optional)"
                 },
                 {
                     "type": "Label",
-                    "caption": "The refresh token is the recommended authentication method. See README for instructions."
+                    "caption": "Email and password are required for current Hyundai/Kia OneApp authentication. A legacy 48-character refresh token can still be used without credentials."
                 }
             ]
         },

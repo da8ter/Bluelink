@@ -18,6 +18,8 @@ class HyundaiBluelinkKiaConnectAccount extends IPSModule
 
         // Properties
         $this->RegisterPropertyString('Brand', BrandConfig::BRAND_HYUNDAI);
+        $this->RegisterPropertyString('Username', '');
+        $this->RegisterPropertyString('Password', '');
         $this->RegisterPropertyString('PIN', '');
         $this->RegisterPropertyString('RefreshToken', '');
         $this->RegisterPropertyString('Region', 'EU');
@@ -132,10 +134,12 @@ class HyundaiBluelinkKiaConnectAccount extends IPSModule
                 $this->SetStatus(IS_ACTIVE);
                 $this->SendDebug('TestLogin', 'Login successful. Token expires: ' . ($result['tokenExpiry'] ?? 'n/a'), 0);
             } else {
+                $this->SetStatus(200);
                 $this->SendDebug('TestLogin', 'Login FAILED: ' . ($result['message'] ?? 'unknown'), 0);
             }
             return json_encode($result);
         } catch (Exception $e) {
+            $this->SetStatus(200);
             $this->SendDebug('TestLogin', 'EXCEPTION: ' . $e->getMessage(), 0);
             return json_encode(['success' => false, 'message' => $e->getMessage()]);
         }
@@ -359,7 +363,15 @@ class HyundaiBluelinkKiaConnectAccount extends IPSModule
         $basicToken = $config['basicToken'];
         $stampService = $this->createStampService();
 
-        $auth = new BluelinkAuthService($baseUrl, $clientId, $basicToken, $stampService, $config['appId'], $config['pushType']);
+        $auth = new BluelinkAuthService(
+            $baseUrl,
+            $clientId,
+            $basicToken,
+            $stampService,
+            $config['appId'],
+            $config['pushType'],
+            $config
+        );
 
         // Wire up logging
         $auth->setLogger(function (string $message) {
@@ -367,6 +379,10 @@ class HyundaiBluelinkKiaConnectAccount extends IPSModule
         });
 
         $auth->setPin($this->ReadPropertyString('PIN'));
+        $auth->setCredentials(
+            trim($this->ReadPropertyString('Username')),
+            $this->ReadPropertyString('Password')
+        );
 
         $refreshToken = $this->ReadPropertyString('RefreshToken');
         if (!empty($refreshToken)) {
@@ -426,8 +442,11 @@ class HyundaiBluelinkKiaConnectAccount extends IPSModule
     private function hasValidConfig(): bool
     {
         $refreshToken = $this->ReadPropertyString('RefreshToken');
+        $username = trim($this->ReadPropertyString('Username'));
+        $password = $this->ReadPropertyString('Password');
         $brand = $this->ReadPropertyString('Brand');
-        return !empty($refreshToken) && in_array($brand, BrandConfig::getBrands());
+        $hasCredentials = $username !== '' && $password !== '';
+        return ($hasCredentials || !empty($refreshToken)) && in_array($brand, BrandConfig::getBrands());
     }
 
     // ── Debug with secret masking ───────────────────────────────────
@@ -452,9 +471,13 @@ class HyundaiBluelinkKiaConnectAccount extends IPSModule
         $maskedData = $Data;
         if (is_string($maskedData)) {
             $pin = $this->ReadPropertyString('PIN');
+            $password = $this->ReadPropertyString('Password');
             $refreshToken = $this->ReadPropertyString('RefreshToken');
             if (!empty($pin)) {
                 $maskedData = str_replace($pin, '****', $maskedData);
+            }
+            if (!empty($password)) {
+                $maskedData = str_replace($password, '********', $maskedData);
             }
             if (!empty($refreshToken)) {
                 $maskedData = str_replace($refreshToken, BluelinkAuthService::maskSecret($refreshToken, 8), $maskedData);

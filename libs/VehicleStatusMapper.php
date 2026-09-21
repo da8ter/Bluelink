@@ -34,7 +34,8 @@ class VehicleStatusMapper
             'PluggedIn'              => self::getBool($evStatus, 'batteryPlugin'),
             'ChargingState'          => self::getChargingState($evStatus),
             'ChargingPowerKw'        => self::extractChargingPower($evStatus),
-            'RemainingChargeTimeMin' => self::getInt($evStatus, 'remainTime2', 0, 'atc', 'value'),
+            'RemainingChargeTimeMin' => self::getBool($evStatus, 'batteryPlugin')
+                ? self::getInt($evStatus, 'remainTime2', 0, 'atc', 'value') : 0,
             'ChargeLimitAC'          => self::extractChargeLimit($evStatus, 1),
             'ChargeLimitDC'          => self::extractChargeLimit($evStatus, 0),
 
@@ -115,14 +116,21 @@ class VehicleStatusMapper
         $pluggedIn = ($connectorState !== null && $connectorState > 0);
 
         $remainTime = self::nested($state, 'Green.ChargingInformation.Charging.RemainTime');
-        $chargingRemainingMin = ($remainTime !== null) ? (int) $remainTime : 0;
-        $isCharging = ($chargingRemainingMin > 0);
+        $realTimePower = self::nested($state, 'Green.Electric.SmartGrid.RealTimePower');
+        $chargingCurrent = self::nested($state, 'Green.ChargingInformation.ElectricCurrentLevel.State');
 
         $chargingState = 0;
-        if ($isCharging) {
-            $chargingState = 2;
-        } elseif ($pluggedIn || $chargePortOpen) {
-            $chargingState = 1;
+        $chargingRemainingMin = 0;
+        if ($pluggedIn || $chargePortOpen) {
+            $isCharging = ($remainTime !== null && (int) $remainTime > 0)
+                || ($realTimePower !== null && (float) $realTimePower > 0)
+                || ($chargingCurrent !== null && (int) $chargingCurrent > 0);
+            if ($isCharging) {
+                $chargingState = 2;
+                $chargingRemainingMin = ($remainTime !== null) ? (int) $remainTime : 0;
+            } else {
+                $chargingState = 1;
+            }
         }
 
         $soc = self::nested($state, 'Green.BatteryManagement.BatteryRemain.Ratio');
@@ -295,18 +303,18 @@ class VehicleStatusMapper
     private static function getChargingState(array $evStatus): int
     {
         if (empty($evStatus)) {
-            return 0; // Unknown
+            return 0;
+        }
+        $pluggedIn = $evStatus['batteryPlugin'] ?? 0;
+        if ($pluggedIn <= 0) {
+            return 0; // Not plugged in
         }
         $charging = $evStatus['batteryCharge'] ?? false;
-        $pluggedIn = $evStatus['batteryPlugin'] ?? 0;
-
-        if ($charging === true || $charging === 1) {
+        $remainTimeAtc = $evStatus['remainTime2']['atc']['value'] ?? 0;
+        if ($charging == true || (int) $remainTimeAtc > 0) {
             return 2; // Charging
         }
-        if ($pluggedIn > 0) {
-            return 1; // Plugged in, not charging
-        }
-        return 0; // Not plugged in
+        return 1; // Plugged in, not charging
     }
 
     private static function getTemperature(array $data, string $key, string $subKey): float
