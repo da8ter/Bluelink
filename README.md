@@ -17,7 +17,6 @@ Liest Fahrzeugdaten und steuert Remote-Aktionen über die Hyundai Bluelink / Kia
 - IP-Symcon >= 8.2 (9.0)
 - Hyundai Bluelink oder Kia Connect Account (EU)
 - Hyundai/Kia Account-E-Mail und Passwort
-- Optional: alter 48-stelliger Refresh Token
 - PIN (4-stellig) für Remote-Aktionen
 
 ## Installation
@@ -43,9 +42,7 @@ Hyundai und Kia EU verwenden inzwischen den OneApp/CCI-Login. Im Account-Modul w
 
 Access-, Refresh- und Begleittokens werden im Instanzpuffer gespeichert und automatisch erneuert. Das Passwort wird nicht in Debug-Ausgaben geschrieben.
 
-### Alte Refresh Tokens
-
-Ein alter, 48-stelliger OAuth-Refresh-Token kann weiterhin ohne E-Mail/Passwort verwendet werden. Die von aktuellen Token-Generatoren ausgegebenen 87-stelligen CCI-Refresh-Tokens sind allein nicht verwendbar, da die Hersteller-API zusätzlich mehrere Begleittokens verlangt. Für diese Tokens müssen E-Mail und Passwort konfiguriert werden; das Feld **Alter Refresh Token** kann leer bleiben.
+Die frühere Refresh-Token-Property bleibt intern zur Kompatibilität mit bestehenden Installationen erhalten, wird bei neuen Konfigurationen aber nicht mehr angezeigt. Aktuelle Tokens werden vollständig vom Modul verwaltet.
 
 ## CCS2-Protokoll
 

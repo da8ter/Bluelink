@@ -25,6 +25,10 @@ class BrandConfig
             'cciClientName'           => 'hyundai',
             'cciClientOsVersion'      => '18.7',
             'cciNotificationProvider' => 'APNS',
+            'fpClientName'            => 'HyundaiEU',
+            'fpKey'                   => 'OsZDfDuCyVX' . 'yfqjCoA2JbX' . '2MrLpGwNBC',
+            'fpBrandLabel'            => 'Hyundai',
+
         ],
         self::BRAND_KIA => [
             'baseUrl'    => 'https://prd.eu-ccapi.kia.com:8080',
@@ -43,6 +47,9 @@ class BrandConfig
             'cciClientName'           => 'kia',
             'cciClientOsVersion'      => '27',
             'cciNotificationProvider' => 'IOS_APPSTORE',
+            'fpClientName'            => 'KiaEU',
+            'fpKey'                   => 'yb4Z1n2nlKe' . 'ukNilE7QEdb' . 'KB34nStPVa',
+            'fpBrandLabel'            => 'Kia',
         ],
     ];
 

@@ -547,11 +547,11 @@ class BluelinkAuthService
         }
 
         $this->log('OneApp signin successful; exchanging authorization code for CCI tokens...');
-        $tokenResponse = $this->httpPost(
-            rtrim($this->authConfig['cciApiUrl'], '/') . '/domain/api/v1/auth/token?'
-                . http_build_query(['code' => $code], '', '&', PHP_QUERY_RFC3986),
-            '',
-            $this->buildCciHeaders($deviceId, '', '', '', false)
+        $query = '?' . http_build_query(['code' => $code], '', '&', PHP_QUERY_RFC3986);
+        $tokenResponse = $this->cciPost(
+            'auth-code exchange',
+            fn() => $this->httpPost($this->cciUrl('/auth/v1/token') . $query, '', $this->buildFpHeaders($deviceId, '')),
+            fn() => $this->httpPost($this->cciUrl('/domain/api/v1/auth/token') . $query, '', $this->buildCciHeaders($deviceId, '', '', '', false))
         );
         $statusCode = $this->parseStatusCode($tokenResponse['headers'] ?? []);
         $tokens = json_decode($tokenResponse['body'] ?? '', true);
@@ -592,16 +592,14 @@ class BluelinkAuthService
             'idToken' => $this->idToken,
         ], JSON_UNESCAPED_SLASHES);
 
-        $response = $this->httpPost(
-            $url,
-            $body,
-            $this->buildCciHeaders(
-                $this->deviceId,
-                $this->cciAccessToken,
-                $this->nonCcsToken,
-                $this->exchangeableToken,
-                true
-            )
+        $response = $this->cciPost(
+            'token refresh',
+            function () use ($body) {
+                $headers = $this->buildFpHeaders($this->deviceId, $body);
+                $headers[] = 'Content-Type: application/json';
+                return $this->httpPost($this->cciUrl('/auth/v2/token-refresh'), $body, $headers);
+            },
+            fn() => $this->httpPost($url, $body, $this->buildCciHeaders($this->deviceId, $this->cciAccessToken, $this->nonCcsToken, $this->exchangeableToken, true))
         );
         $statusCode = $this->parseStatusCode($response['headers'] ?? []);
         $data = json_decode($response['body'] ?? '', true);
@@ -628,18 +626,15 @@ class BluelinkAuthService
 
     private function exchangeCciForCcsAccessToken(): void
     {
-        $url = rtrim($this->authConfig['cciApiUrl'] ?? '', '/')
-            . '/domain/api/v1/auth/token-exchange?serviceType=CCS';
-        $response = $this->httpPost(
-            $url,
-            '',
-            $this->buildCciHeaders(
-                $this->deviceId,
-                $this->cciAccessToken,
-                $this->nonCcsToken,
-                $this->exchangeableToken,
-                false
-            )
+        $response = $this->cciPost(
+            'CCS token exchange',
+            function () {
+                $headers = $this->buildFpHeaders($this->deviceId, '');
+                $this->addCciTokenHeaders($headers, $this->cciAccessToken, $this->nonCcsToken, $this->exchangeableToken);
+                $headers[] = 'Content-Length: 0';
+                return $this->httpPost($this->cciUrl('/auth/v1/token-exchange?serviceType=CCS'), '', $headers);
+            },
+            fn() => $this->httpPost($this->cciUrl('/domain/api/v1/auth/token-exchange?serviceType=CCS'), '', $this->buildCciHeaders($this->deviceId, $this->cciAccessToken, $this->nonCcsToken, $this->exchangeableToken, false))
         );
         $statusCode = $this->parseStatusCode($response['headers'] ?? []);
         $data = json_decode($response['body'] ?? '', true);
@@ -654,6 +649,102 @@ class BluelinkAuthService
         $this->tokenExpiry = time() + max(60, $expiresIn);
         $this->authMode = 'cci';
         $this->log('CCS token exchange OK. expires_in=' . $expiresIn);
+    }
+
+    private function cciUrl(string $path): string
+    {
+        return rtrim($this->authConfig['cciApiUrl'] ?? '', '/') . $path;
+    }
+
+    /**
+     * Seit 14.10.2026 verlangen die EU-Auth-Endpunkte (cci-api-eu…/auth/*) eine Signatur: erst der
+     * signierte Aufruf; lehnt das Tor ihn ab (Codes 9035 fehlend, 9036 falsch, 9037 Zeit), der alte
+     * unsignierte Weg. Andere Fehler bleiben Fehler des signierten Wegs.
+     */
+    private function cciPost(string $name, callable $signed, callable $legacy): array
+    {
+        if (($this->authConfig['fpKey'] ?? '') === '') {
+            return $legacy();
+        }
+        $response = $signed();
+        $code = $this->gateRejection($response);
+        if ($code === 0) {
+            return $response;
+        }
+        $this->log('CCI ' . $name . ': fingerprint gate rejected the signed call (code ' . $code . '), using legacy route');
+        return $legacy();
+    }
+
+    /** Code der Tor-Ablehnung (9035–9037) bei HTTP 4xx, sonst 0. */
+    private function gateRejection(array $response): int
+    {
+        $status = $this->parseStatusCode($response['headers'] ?? []);
+        if ($status < 400 || $status >= 500) {
+            return 0;
+        }
+        $data = json_decode($response['body'] ?? '', true);
+        $code = is_array($data) ? (int) ($data['code'] ?? 0) : 0;
+        return in_array($code, [9035, 9036, 9037], true) ? $code : 0;
+    }
+
+    /** Kopfzeilen der signierten Auth-Endpunkte: Identität der Android-OneApp 1.4.0 plus X-Timestamp und X-Fingerprint. */
+    private function buildFpHeaders(string $deviceId, string $body): array
+    {
+        $locale = 'DE';
+        $map = [
+            'client-id' => $this->authConfig['cciPackageId'] ?? '',
+            'client-name' => $this->authConfig['fpClientName'] ?? '',
+            'client-version' => '1.4.0',
+            'client-os-code' => 'android',
+            'client-os-version' => '14',
+            'client-device-id' => $deviceId,
+            'client-device-model' => 'SM-S918B',
+            'client-notification-provider-type' => 'FCM',
+            'locale' => $locale,
+            'timezone' => date('P'),
+            'App-Request-Id' => strtoupper(bin2hex(random_bytes(12))) . '_' . str_replace('-', '', $deviceId) . '_AOS',
+            'X-Brand' => $this->authConfig['fpBrandLabel'] ?? '',
+            'X-Region' => 'eu',
+            'User-Agent' => 'okhttp/4.12.0',
+            'Accept' => '*/*',
+            'Accept-Language' => strtolower($locale),
+            'X-Timestamp' => (string) (int) floor(microtime(true) * 1000),
+        ];
+        $map['X-Fingerprint'] = self::computeFingerprint($map, (string) ($this->authConfig['fpKey'] ?? ''), $body);
+        $headers = [];
+        foreach ($map as $k => $v) {
+            $headers[] = $k . ': ' . $v;
+        }
+        return $headers;
+    }
+
+    /**
+     * HMAC-SHA256 nach dem Schema der OneApp: Schlüssel = Identität (client-id, -name, -version, -os-code)
+     * + Markengeheimnis; Nachricht = Identität + client-os-version + X-Timestamp + Body ohne ASCII-Leerraum.
+     */
+    public static function computeFingerprint(array $headers, string $key, string $body): string
+    {
+        $lower = [];
+        foreach ($headers as $k => $v) {
+            $lower[strtolower((string) $k)] = (string) $v;
+        }
+        $identity = ($lower['client-id'] ?? '') . ($lower['client-name'] ?? '') . ($lower['client-version'] ?? '') . ($lower['client-os-code'] ?? '');
+        $msg = $identity . ($lower['client-os-version'] ?? '') . ($lower['x-timestamp'] ?? '') . preg_replace('/[ \t\n\x0B\f\r]+/', '', $body);
+        return hash_hmac('sha256', $msg, $identity . $key);
+    }
+
+    private function addCciTokenHeaders(array &$headers, string $cciAccessToken, string $nonCcsToken, string $exchangeableToken): void
+    {
+        if ($nonCcsToken !== '') {
+            $headers[] = 'Authentication: ' . $nonCcsToken;
+        }
+        if ($cciAccessToken !== '') {
+            $headers[] = 'authorization: Bearer ' . $this->stripBearerPrefix($cciAccessToken);
+        }
+        if ($exchangeableToken !== '') {
+            $headers[] = 'exchangeable-token: ' . $exchangeableToken;
+            $headers[] = 'non-ccs-token: ' . $nonCcsToken;
+        }
     }
 
     private function buildCciHeaders(
