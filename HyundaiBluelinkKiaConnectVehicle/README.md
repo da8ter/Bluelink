@@ -10,6 +10,7 @@ Funktionen:
 - Remote-Aktionen: Verriegeln, Entriegeln, Klimaanlage, Laden
 - Standortabfrage
 - EV-Daten: Ladezustand, Reichweite, Ladestatus
+- Fahrstatistik (optional): Tageswerte für Verbrauch je Komponente, Rekuperation und Strecke, als Zähler mit Nachtrag ins Archiv
 
 ## Voraussetzungen
 
@@ -37,6 +38,7 @@ Funktionen:
 | Refresh On Action | bool | false | Status nach Remote-Aktion automatisch aktualisieren |
 | Faster Vehicle Polling While Charging | bool | false | Schnelleres Fahrzeug-Polling während des Ladens |
 | Charging Poll Interval | integer | 900 | Fahrzeug-Refresh-Intervall während des Ladens in Sekunden (min. 300) |
+| Driving Statistics | bool | false | Tageswerte der Fahrstatistik abrufen (siehe unten) |
 | Debug Enabled | bool | false | Debug-Ausgabe aktivieren |
 
 ## Variablen
@@ -108,6 +110,20 @@ Die Statusvariablen verwenden Symcon-Darstellungen.
 | FuelLevelPercent | int | Value Presentation | Tankfüllstand (nur Verbrenner/PHEV) |
 | Battery12VPercent | int | Value Presentation | 12V-Batterie |
 
+### Fahrstatistik (optional)
+
+Mit „Tageswerte (Energie je Komponente, Strecke)“ holt die Instanz stündlich zusammen mit der Statusabfrage die Tageswerte der letzten 30 Tage aus der Cloud. Das weckt das Auto nicht. Die Werte gibt es nur bei Fahrzeugen, die sie liefern (Elektro und Plug-in-Hybrid).
+
+| Ident | Typ | Beschreibung |
+|-------|-----|-------------|
+| StatsDayDate | string | Datum des letzten abgeschlossenen Tags mit Fahrdaten |
+| StatsDayConsumption, StatsDayDrive, StatsDayClimate, StatsDayElectronics, StatsDayBatteryCare | float | Verbrauch dieses Tags in kWh: gesamt, Antrieb, Klima, Bordelektronik, Batteriepflege |
+| StatsDayRegeneration | float | Rekuperation dieses Tags in kWh |
+| StatsDayDistance | float | Strecke dieses Tags in km |
+| StatsCounterConsumption … StatsCounterDistance | float | Dieselben Werte als fortlaufende Zähler |
+
+Jeder abgeschlossene Tag wird einmal in die Zähler gebucht. Beim Einschalten trägt die Instanz die letzten 30 Tage mit ihrem Datum ins Archiv nach, danach jeden neuen Tag. Die Zähler werden beim Anlegen geloggt und auf die Archiv-Aggregation „Zähler“ gestellt; Tages-, Wochen- und Monatssummen kommen so direkt aus dem Archiv, auch wenn tagelang nicht abgefragt wurde (bis 30 Tage). Daten, die erst nach dem nächsten gebuchten Tag eintreffen, zählt die Instanz zum Zeitpunkt des Abrufs dazu.
+
 ### Meta
 
 | Ident | Typ | Beschreibung |
@@ -133,3 +149,4 @@ Die Statusvariablen verwenden Symcon-Darstellungen.
 | `BL_ChargeStart($id)` | Laden starten |
 | `BL_ChargeStop($id)` | Laden stoppen |
 | `BL_SetChargeTargets($id, $limitAC, $limitDC)` | Ladelimits setzen (50–100%) |
+| `BL_UpdateDrivingStats($id)` | Fahrstatistik sofort abrufen |

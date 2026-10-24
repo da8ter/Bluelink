@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/../libs/DrivingStats.php';
+
 class HyundaiBluelinkKiaConnectVehicle extends IPSModule
 {
     private const DEFAULT_POLL_INTERVAL = 300;
@@ -10,6 +12,8 @@ class HyundaiBluelinkKiaConnectVehicle extends IPSModule
     private const MIN_VEHICLE_REFRESH_INTERVAL = 600; // 10 minutes
     private const COMMAND_POLL_INTERVAL = 5;
     private const COMMAND_TIMEOUT = 120;
+    private const DRIVING_STATS_INTERVAL = 3600;
+    private const ARCHIVE_CONTROL_GUID = '{43192F0B-135B-4CE7-A0A7-1475603F3060}';
 
     public function Create()
     {
@@ -28,12 +32,18 @@ class HyundaiBluelinkKiaConnectVehicle extends IPSModule
         $this->RegisterPropertyInteger('ChargingPollInterval', self::DEFAULT_CHARGING_POLL_INTERVAL);
         $this->RegisterPropertyBoolean('DebugEnabled', false);
         $this->RegisterPropertyInteger('DebugLevel', 0);
+        $this->RegisterPropertyBoolean('DrivingStats', false);
+
+        // Days already booked into the driving statistics counters
+        $this->RegisterAttributeString('DrivingStatsBooked', '{}');
+        $this->RegisterAttributeInteger('DrivingStatsLastWrite', 0);
 
         // Buffers
         $this->SetBuffer('StatusCache', '');
         $this->SetBuffer('LocationCache', '');
         $this->SetBuffer('CommandState', '');
         $this->SetBuffer('LastVehicleRefresh', '0');
+        $this->SetBuffer('LastDrivingStats', '0');
 
         // Timers
         $this->RegisterTimer('PollStatus', 0, 'BL_UpdateStatus($_IPS[\'TARGET\']);');
@@ -271,6 +281,8 @@ class HyundaiBluelinkKiaConnectVehicle extends IPSModule
             $this->SetTimerInterval('ForceRefreshStatus', 0);
         }
 
+        $this->MaintainDrivingStatsVariables();
+
         // Set status
         if (empty($vin) || empty($this->ReadPropertyString('VehicleId'))) {
             $this->SetStatus(IS_INACTIVE);
@@ -368,6 +380,71 @@ class HyundaiBluelinkKiaConnectVehicle extends IPSModule
         // Get cached/cloud status (odometer is included in status response)
         $this->FetchAndApplyStatus($vehicleId);
         $this->FetchAndApplyLocation($vehicleId);
+
+        if ($this->ReadPropertyBoolean('DrivingStats')
+            && time() - (int) $this->GetBuffer('LastDrivingStats') >= self::DRIVING_STATS_INTERVAL) {
+            $this->UpdateDrivingStats();
+        }
+    }
+
+    /**
+     * Fetches the daily driving statistics of the last 30 days (cloud only, does not wake the car),
+     * books completed days into the counters and backfills them into the archive.
+     */
+    public function UpdateDrivingStats(): void
+    {
+        $vehicleId = $this->ReadPropertyString('VehicleId');
+        if (empty($vehicleId) || !$this->ReadPropertyBoolean('DrivingStats')) {
+            return;
+        }
+        $this->SetBuffer('LastDrivingStats', (string) time());
+
+        $result = $this->SendToParent('GetDrivingHistory', ['VehicleId' => $vehicleId]);
+        if (!($result['success'] ?? false)) {
+            $this->SendDebug('DrivingStats', 'Failed: ' . ($result['error'] ?? 'unknown'), 0);
+            return;
+        }
+
+        $days = DrivingStats::parseDays($result['days'] ?? []);
+        $booked = json_decode($this->ReadAttributeString('DrivingStatsBooked'), true) ?: [];
+        $lastWrite = $this->ReadAttributeInteger('DrivingStatsLastWrite');
+        $plan = DrivingStats::plan($days, $booked, $lastWrite, date('Y-m-d'));
+        $this->SendDebug('DrivingStats', sprintf('%d days received, %d to backfill', count($days), count($plan['backfill'])), 0);
+
+        $hasNow = array_sum($plan['now']) > 0;
+        if ($plan['backfill'] !== [] || $hasNow) {
+            $archive = $this->ArchiveID();
+            foreach (DrivingStats::KEYS as $key) {
+                $ident = 'StatsCounter' . $key;
+                $value = (float) $this->GetValue($ident);
+                $entries = [];
+                if ($lastWrite === 0 && $plan['backfill'] !== []) {
+                    // Starting point the day before the first booked day, otherwise the counter
+                    // aggregation has no previous value for the first day.
+                    $entries[] = ['TimeStamp' => $plan['backfill'][0]['end'] - 86400, 'Value' => $value];
+                }
+                foreach ($plan['backfill'] as $day) {
+                    $value += $day['values'][$key];
+                    $entries[] = ['TimeStamp' => $day['end'], 'Value' => round($value, 3)];
+                }
+                $value += $plan['now'][$key];
+                $variableID = $this->GetIDForIdent($ident);
+                if ($archive > 0 && $entries !== [] && AC_GetLoggingStatus($archive, $variableID)) {
+                    AC_AddLoggedValues($archive, $variableID, $entries);
+                    AC_ReAggregateVariable($archive, $variableID);
+                }
+                $this->SetValue($ident, round($value, 3));
+            }
+            $this->WriteAttributeInteger('DrivingStatsLastWrite', time());
+        }
+        $this->WriteAttributeString('DrivingStatsBooked', json_encode($plan['booked']));
+
+        if ($plan['lastDay'] !== null) {
+            $this->SetValue('StatsDayDate', date('d.m.Y', DrivingStats::dayEnd($plan['lastDay']['date'])));
+            foreach (DrivingStats::KEYS as $key) {
+                $this->SetValue('StatsDay' . $key, $plan['lastDay']['values'][$key]);
+            }
+        }
     }
 
     public function RefreshVehicleStatus(): void
@@ -767,6 +844,67 @@ class HyundaiBluelinkKiaConnectVehicle extends IPSModule
     }
 
     // ── Private: Data Flow ──────────────────────────────────────────
+
+    private function MaintainDrivingStatsVariables(): void
+    {
+        $enabled = $this->ReadPropertyBoolean('DrivingStats');
+        if (!$enabled) {
+            // Start over (30 days backfill) when the statistics are switched on again
+            $this->WriteAttributeString('DrivingStatsBooked', '{}');
+            $this->WriteAttributeInteger('DrivingStatsLastWrite', 0);
+        }
+        $this->SetBuffer('LastDrivingStats', '0');
+
+        $energy = static function (string $icon): array {
+            return [
+                'PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION, 'ICON' => $icon, 'SUFFIX' => ' kWh', 'DIGITS' => 2,
+            ];
+        };
+        $distance = [
+            'PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION, 'ICON' => 'Distance', 'SUFFIX' => ' km', 'DIGITS' => 1,
+        ];
+        $variables = [
+            'Consumption'  => ['Consumption total', $energy('Electricity')],
+            'Drive'        => ['Consumption drive', $energy('Car')],
+            'Climate'      => ['Consumption climate', $energy('Climate')],
+            'Electronics'  => ['Consumption electronics', $energy('Electricity')],
+            'BatteryCare'  => ['Consumption battery care', $energy('Battery')],
+            'Regeneration' => ['Regeneration', $energy('Battery')],
+            'Distance'     => ['Distance', $distance],
+        ];
+
+        $this->MaintainVariable('StatsDayDate', $this->Translate('Driving statistics day'), VARIABLETYPE_STRING, [
+            'PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION, 'ICON' => 'Clock',
+        ], 80, $enabled);
+
+        $archive = $this->ArchiveID();
+        $archiveChanged = false;
+        $position = 81;
+        foreach ($variables as $key => [$caption, $presentation]) {
+            $this->MaintainVariable('StatsDay' . $key, $this->Translate('Day: ' . $caption), VARIABLETYPE_FLOAT, $presentation, $position, $enabled);
+
+            $ident = 'StatsCounter' . $key;
+            $isNew = @IPS_GetObjectIDByIdent($ident, $this->InstanceID) === false;
+            $this->MaintainVariable($ident, $this->Translate($caption . ' (counter)'), VARIABLETYPE_FLOAT, $presentation, $position + 10, $enabled);
+            if ($enabled && $isNew && $archive > 0) {
+                // Counter aggregation turns the running totals into daily/monthly sums
+                $variableID = $this->GetIDForIdent($ident);
+                AC_SetLoggingStatus($archive, $variableID, true);
+                AC_SetAggregationType($archive, $variableID, 1);
+                $archiveChanged = true;
+            }
+            $position++;
+        }
+        if ($archiveChanged) {
+            IPS_ApplyChanges($archive);
+        }
+    }
+
+    private function ArchiveID(): int
+    {
+        $list = IPS_GetInstanceListByModuleID(self::ARCHIVE_CONTROL_GUID);
+        return $list === [] ? 0 : (int) $list[0];
+    }
 
     private function HasPIN(): bool
     {

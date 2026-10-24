@@ -76,6 +76,9 @@ class HyundaiBluelinkKiaConnectAccount extends IPSModule
             case 'GetVehicleOdometer':
                 return $this->GetVehicleOdometerJSON($data['VehicleId'] ?? '');
 
+            case 'GetDrivingHistory':
+                return $this->GetDrivingHistoryJSON($data['VehicleId'] ?? '');
+
             case 'Lock':
                 return $this->ExecuteCommandJSON($data['VehicleId'] ?? '', 'Lock');
 
@@ -260,6 +263,22 @@ class HyundaiBluelinkKiaConnectAccount extends IPSModule
             return json_encode(['success' => true, 'odometer' => $value]);
         } catch (Exception $e) {
             $this->SendDebug('GetVehicleOdometer', 'Error: ' . $e->getMessage(), 0);
+            return json_encode(['success' => false, 'error' => $e->getMessage()]);
+        } finally {
+            if ($services) { $this->persistAuthCache($services['auth']); }
+        }
+    }
+
+    private function GetDrivingHistoryJSON(string $vehicleId): string
+    {
+        $services = null;
+        try {
+            $services = $this->createApiClientWithAuth();
+            $history = $services['client']->getDrivingHistory($vehicleId, 0);
+            $this->SendDebug('GetDrivingHistory', 'Days: ' . count($history['drivingInfoDetail'] ?? []), 0);
+            return json_encode(['success' => true, 'days' => $history['drivingInfoDetail'] ?? []]);
+        } catch (Exception $e) {
+            $this->SendDebug('GetDrivingHistory', 'Error: ' . $e->getMessage(), 0);
             return json_encode(['success' => false, 'error' => $e->getMessage()]);
         } finally {
             if ($services) { $this->persistAuthCache($services['auth']); }

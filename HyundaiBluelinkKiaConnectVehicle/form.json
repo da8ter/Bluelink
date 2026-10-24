@@ -62,6 +62,26 @@
         },
         {
             "type": "ExpansionPanel",
+            "caption": "Driving statistics",
+            "items": [
+                {
+                    "type": "CheckBox",
+                    "name": "DrivingStats",
+                    "caption": "Daily driving statistics (energy per component, distance)"
+                },
+                {
+                    "type": "Label",
+                    "caption": "Fetched hourly from the cloud together with the status poll (does not wake the car). Completed days are added to counters; the last 30 days are backfilled into the archive with their date. The counters use the archive aggregation \"Counter\", so daily, weekly and monthly sums come from the archive."
+                },
+                {
+                    "type": "Button",
+                    "caption": "Fetch driving statistics now",
+                    "onClick": "BL_UpdateDrivingStats($id);"
+                }
+            ]
+        },
+        {
+            "type": "ExpansionPanel",
             "caption": "Debug",
             "items": [
                 {

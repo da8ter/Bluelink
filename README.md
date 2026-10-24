@@ -115,6 +115,7 @@ Die Kommunikation läuft über den offiziellen IP-Symcon Datenfluss (`SendDataTo
 | `BL_ChargeStart($id)` | Laden starten |
 | `BL_ChargeStop($id)` | Laden stoppen |
 | `BL_SetChargeTargets($id, $limitAC, $limitDC)` | Ladelimits setzen (50–100%) |
+| `BL_UpdateDrivingStats($id)` | Fahrstatistik (Tageswerte) sofort abrufen |
 
 ## Lizenz
 

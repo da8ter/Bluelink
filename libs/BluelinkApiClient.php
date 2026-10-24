@@ -125,6 +125,18 @@ class BluelinkApiClient
         return $response['resMsg'] ?? [];
     }
 
+    /**
+     * Driving history from the cloud (does not wake the car).
+     * periodTarget 0 = last 30 days incl. drivingInfoDetail per day, 1 = all time.
+     */
+    public function getDrivingHistory(string $vehicleId, int $periodTarget = 0): array
+    {
+        $response = $this->request('POST', '/api/v1/spa/vehicles/' . $vehicleId . '/drvhistory', [
+            'periodTarget' => $periodTarget,
+        ]);
+        return $response['resMsg'] ?? [];
+    }
+
     // ── Remote Actions ──────────────────────────────────────────────
 
     public function lock(string $vehicleId): array
