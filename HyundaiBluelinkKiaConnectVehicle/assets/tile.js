@@ -29,6 +29,9 @@
   const pending = {};             // Sollwert -> {value, timer, until}
   let busyUntil = 0;              // nach einem Tipp, bis der Befehl im Zustand steht
   let refreshing = null;          // laufende Abfrage {updated, timer}: Symbol dreht sich nur bis zur Antwort
+  const older = {};               // ältere Tage des Fahrtenbuchs, monatsweise nachgeladen
+  const loadedMonths = new Set();
+  let olderRequest = null;        // {rid, month, timer}: Antwort nur für dieses Fenster
 
   function action(ident, value) {
     try { requestAction(ident, value); } catch (e) { /* außerhalb von Symcon */ }
@@ -235,10 +238,43 @@
     return num(d.Consumption, 1) + ' kWh' + (dist > 0 ? ' · ' + num(d.Consumption / dist * 100, 1) + ' ' + T('kWh/100 km') : '');
   }
 
+  // Ältere Monate: der Zustand trägt nur die letzten 31 Tage, der Rest kommt auf Anfrage
+  const monthOf = key => key.slice(0, 7);
+  function prevMonth(m) {
+    const p = m.split('-').map(Number), d = new Date(p[0], p[1] - 2, 1);
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+  }
+  function monthLabel(m) {
+    const p = m.split('-').map(Number);
+    return new Date(p[0], p[1] - 1, 1).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+  }
+  function windowStart() {
+    const d = new Date(now() * 1000);
+    d.setDate(d.getDate() - 30);
+    return ymd(d);
+  }
+  function nextOlderMonth(s) {
+    if (!s.tripOldest) return null;
+    const start = windowStart();
+    let m = start.slice(8) === '01' ? prevMonth(monthOf(start)) : monthOf(start);
+    while (loadedMonths.has(m)) m = prevMonth(m);
+    return m >= monthOf(s.tripOldest) ? m : null;
+  }
+  function loadOlder(month) {
+    const rid = Math.random().toString(36).slice(2, 12);
+    olderRequest = { rid, month, timer: setTimeout(() => { olderRequest = null; render(); }, 15000) };
+    action('TileTrips', JSON.stringify({ month, rid }));
+    render();
+  }
+  const allTripDays = s => Object.keys(Object.assign({}, older, s.trips || {})).sort().reverse();
+  const tripEntry = (s, key) => (s.trips && s.trips[key]) || older[key];
+
   function tripLog(s) {
-    const days = tripDays(s);
-    if (!days.length) return '<div class="empty">' + I('route') + '<span>' + esc(T('No trips yet')) + '</span></div>';
-    if (!openInit) { openDays.add(days[0]); openInit = true; }
+    const days = tripDays(s), all = allTripDays(s), next = nextOlderMonth(s);
+    const olderBtn = next ? '<button class="wide-btn" data-act="older" data-v="' + esc(next) + '"' + (olderRequest ? ' disabled' : '') + '>' + I('clock')
+      + '<span>' + esc(olderRequest ? T('Loading…') : T('Older trips') + ' · ' + monthLabel(next)) + '</span></button>' : '';
+    if (!all.length) return '<div class="empty">' + I('route') + '<span>' + esc(T('No trips yet')) + '</span></div>' + olderBtn;
+    if (!openInit) { openDays.add(all[0]); openInit = true; }
     let trips = 0, km = 0, minutes = 0;
     days.forEach(k => { const e = s.trips[k]; trips += e.count; km += e.dist; minutes += e.drive; });
     let html = '<div class="summary">'
@@ -246,8 +282,14 @@
       + '<div><b>' + num(km) + ' km</b><span>' + esc(T('Distance')) + '</span></div>'
       + '<div><b>' + esc(dur(minutes)) + '</b><span>' + esc(T('Driving time')) + '</span></div></div>'
       + '<div class="caption">' + esc(T('Last 30 days')) + '</div>';
-    days.forEach(key => {
-      const e = s.trips[key], isOpen = openDays.has(key), energy = energyText(s, key, e.dist);
+    const start = windowStart();
+    let month = null;
+    all.forEach(key => {
+      if (key < start && monthOf(key) !== month) {
+        month = monthOf(key);
+        html += '<div class="caption month">' + esc(monthLabel(month)) + '</div>';
+      }
+      const e = tripEntry(s, key), isOpen = openDays.has(key), energy = energyText(s, key, e.dist);
       html += '<section class="card day' + (isOpen ? ' open' : '') + '"><button class="day-head" data-act="day" data-v="' + esc(key) + '">'
         + '<span class="day-title"><b>' + esc(dayLabel(key)) + '</b><small>' + esc((e.count === 1 ? T('%d trip', e.count) : T('%d trips', e.count)) + ' · ' + dur(e.drive) + (energy ? ' · ' + energy : '')) + '</small></span>'
         + '<b class="day-km">' + num(e.dist) + ' km</b>' + I(isOpen ? 'down' : 'right', 'chev') + '</button>';
@@ -258,7 +300,7 @@
       }
       html += '</section>';
     });
-    return html;
+    return html + olderBtn;
   }
 
   const PARTS = [['Drive', 'var(--accent)'], ['Climate', 'var(--orange)'], ['Electronics', '#8e7cf0'], ['BatteryCare', 'var(--muted)']];
@@ -429,6 +471,7 @@
       case 'day': if (openDays.has(v)) openDays.delete(v); else openDays.add(v); render(); break;
       case 'metric': metric = v; render(); break;
       case 'bar': selDay = v; render(); break;
+      case 'older': if (!olderRequest) loadOlder(v); break;
       case 'refresh':
         refreshing = { updated: s.updated, error: s.error, timer: setTimeout(stopRefresh, 30000) };
         action('TileRefresh', true);
@@ -462,6 +505,17 @@
   function receive(data) {
     let msg;
     try { msg = typeof data === 'string' ? JSON.parse(data) : data; } catch (e) { return; }
+    if (msg && msg.type === 'trips') {
+      // Nur die eigene Anfrage, und nur einmal (jede Nachricht kommt doppelt)
+      if (olderRequest && msg.rid === olderRequest.rid) {
+        clearTimeout(olderRequest.timer);
+        Object.assign(older, msg.days || {});
+        loadedMonths.add(msg.month);
+        olderRequest = null;
+        render();
+      }
+      return;
+    }
     if (!msg || msg.type !== 'state') return;
     state = msg;
     if (typeof msg.now === 'number') offset = msg.now - Date.now() / 1000;

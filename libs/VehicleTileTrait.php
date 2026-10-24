@@ -24,7 +24,7 @@ trait VehicleTileTrait
         '%d trips', '%s idle', 'No data yet', 'Consumption', 'per driving day', 'Regeneration', 'Updated %s',
         'Online', 'Offline', 'Refresh', 'Tap again to wake the vehicle', 'Wake vehicle (drains the 12V battery)',
         'Overview', 'Statistics', 'Drive', 'Electronics', 'Battery care', 'Avg. speed', 'Close', 'Vehicle data: %s', 'Cloud queried %s', 'last on',
-        'Last report from the car: %s. Climate and charging may have changed since then.', 'last reported',
+        'Last report from the car: %s. Climate and charging may have changed since then.', 'last reported', 'Older trips', 'Loading…',
     ];
 
     private function tileEnabled(): bool
@@ -96,9 +96,21 @@ trait VehicleTileTrait
     }
 
     /** Actions only the tile triggers; false = ident does not belong here. */
-    private function tileAction(string $Ident): bool
+    private function tileAction(string $Ident, $Value = null): bool
     {
         switch ($Ident) {
+            case 'TileTrips':
+                // One month of the stored log for the tile; the answer carries the request id of the
+                // asking window (every open client receives every push)
+                $request = json_decode((string) $Value, true);
+                $month = (string) ($request['month'] ?? '');
+                $rid = (string) ($request['rid'] ?? '');
+                if (!preg_match('/^\d{4}-\d{2}$/', $month) || !preg_match('/^[a-z0-9]{1,16}$/', $rid)) {
+                    return true;
+                }
+                $days = array_filter($this->readTripLog(), static fn ($date): bool => strncmp((string) $date, $month, 7) === 0, ARRAY_FILTER_USE_KEY);
+                $this->UpdateVisualizationValue((string) json_encode(['type' => 'trips', 'rid' => $rid, 'month' => $month, 'days' => (object) $days], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+                return true;
             case 'TileRefresh':
                 $this->UpdateStatus();
                 return true;
@@ -150,9 +162,78 @@ trait VehicleTileTrait
                 $log[$date] = $entry;
             }
         }
-        $this->SendDebug('Trips', sprintf('%d days with trips, %d fetched', count($counts), count($due)), 0);
+        // Older days from the backfill with the calls left in this run
+        $pending = json_decode($this->ReadAttributeString('TripBackfill'), true) ?: [];
+        $older = TripLog::backfillDue($pending, $log, $today, $keepDays, TripLog::MAX_DAY_CALLS - count($due));
+        foreach ($older as $date) {
+            $result = $this->SendToParent('GetTripInfo', ['VehicleId' => $vehicleId, 'PeriodType' => 1, 'Date' => str_replace('-', '', $date)]);
+            if (!($result['success'] ?? false)) {
+                $this->SendDebug('Trips', 'Backfill day ' . $date . ' failed: ' . ($result['error'] ?? 'unknown'), 0);
+                break;
+            }
+            $entry = TripLog::parseDay($result['info'] ?? []);
+            if ($entry !== null) {
+                $log[$date] = $entry;
+            }
+        }
+        if ($pending !== []) {
+            $this->WriteAttributeString('TripBackfill', json_encode((object) TripLog::backfillLeft($pending, $log, $today, $keepDays)));
+        }
+        $this->SendDebug('Trips', sprintf('%d days with trips, %d fetched, %d older fetched', count($counts), count($due), count($older)), 0);
         $this->writeTripLog(TripLog::prune($log, $today, $keepDays));
         $this->tileChanged();
+
+        if (!$this->ReadAttributeBoolean('TripBackfillChecked')) {
+            $this->BackfillTrips();
+        }
+    }
+
+    /**
+     * Looks for older trips in the cloud: walks back month by month (one call each) until three
+     * months in a row have none and remembers the days with trips. Their details are fetched by
+     * UpdateTrips bit by bit (at most MAX_DAY_CALLS per run), which spares the API quota.
+     */
+    public function BackfillTrips(): string
+    {
+        $vehicleId = $this->ReadPropertyString('VehicleId');
+        if (empty($vehicleId) || !$this->tileEnabled()) {
+            return $this->Translate('The trip log needs the dashboard tile.');
+        }
+        $pending = json_decode($this->ReadAttributeString('TripBackfill'), true) ?: [];
+        $month = new DateTime('first day of last month');
+        $checked = 0;
+        $empty = 0;
+        $oldest = '';
+        for ($i = 0; $i < TripLog::BACKFILL_MONTHS && $empty < TripLog::BACKFILL_EMPTY_STOP; $i++) {
+            $result = $this->SendToParent('GetTripInfo', ['VehicleId' => $vehicleId, 'PeriodType' => 0, 'Date' => $month->format('Ym')]);
+            if (!($result['success'] ?? false)) {
+                $this->SendDebug('Backfill', 'Month ' . $month->format('Ym') . ' failed: ' . ($result['error'] ?? 'unknown'), 0);
+                break;
+            }
+            $checked++;
+            $counts = TripLog::monthCounts($result['info'] ?? []);
+            $empty = $counts === [] ? $empty + 1 : 0;
+            foreach ($counts as $date => $count) {
+                if ($count > 0) {
+                    $pending[$date] = $count;
+                    $oldest = $oldest === '' || $date < $oldest ? $date : $oldest;
+                }
+            }
+            $month->modify('-1 month');
+        }
+        if ($checked === 0) {
+            return $this->Translate('The cloud did not answer. Please try again later.');
+        }
+        $keepDays = max(0, $this->ReadPropertyInteger('TripLogDays'));
+        $pending = TripLog::backfillLeft($pending, $this->readTripLog(), date('Y-m-d'), $keepDays);
+        $this->WriteAttributeString('TripBackfill', json_encode((object) $pending));
+        $this->WriteAttributeBoolean('TripBackfillChecked', true);
+        $this->SendDebug('Backfill', sprintf('%d months checked, oldest trip %s, %d days to load', $checked, $oldest ?: '-', count($pending)), 0);
+        if ($oldest === '') {
+            return sprintf($this->Translate('%d months checked, the cloud has no older trips.'), $checked);
+        }
+        return sprintf($this->Translate('%d months checked, trips since %s. %d days are loaded bit by bit (up to %d per hour).'),
+            $checked, date('d.m.Y', (int) strtotime($oldest)), count($pending), TripLog::MAX_DAY_CALLS);
     }
 
     /** Whole trip log as JSON (date => day with trips), newest first. */
@@ -234,6 +315,7 @@ trait VehicleTileTrait
         $lat = (float) $value('Latitude', 0.0);
         $lon = (float) $value('Longitude', 0.0);
         $command = json_decode($this->GetBuffer('CommandState'), true);
+        $log = $this->readTripLog();
 
         return [
             'vehicle'   => ['model' => (string) ($info['model'] ?? ''), 'year' => (string) ($info['year'] ?? ''), 'type' => $type],
@@ -266,8 +348,9 @@ trait VehicleTileTrait
             'pos'       => ($lat != 0.0 || $lon != 0.0)
                 ? ['lat' => $lat, 'lon' => $lon, 'ts' => $timestamp((string) $value('PositionTimestamp', ''), 'YmdHis')] : null,
             'days'      => (object) (json_decode($this->ReadAttributeString('DrivingDays'), true) ?: []),
-            // Only the last days; the whole log can be large (unlimited retention)
-            'trips'     => (object) TripLog::window($this->readTripLog(), date('Y-m-d')),
+            // Only the last days; the whole log can be large (unlimited retention). Older months on request.
+            'trips'     => (object) TripLog::window($log, date('Y-m-d')),
+            'tripOldest' => $log === [] ? '' : (string) min(array_map('strval', array_keys($log))),
         ];
     }
 }

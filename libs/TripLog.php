@@ -11,6 +11,8 @@ class TripLog
 {
     public const FETCH_DAYS = 31;
     public const MAX_DAY_CALLS = 15;
+    public const BACKFILL_MONTHS = 60;      // walk back at most five years
+    public const BACKFILL_EMPTY_STOP = 3;   // three months in a row without trips end the walk
 
     /** Month answer (tripPeriodType 0) → ['Y-m-d' => trip count]. */
     public static function monthCounts(array $msg): array
@@ -71,6 +73,32 @@ class TripLog
             'max'   => (float) ($day['tripMaxSpeed'] ?? 0),
             'trips' => $trips,
         ];
+    }
+
+    /**
+     * Older days found by the backfill that are still missing from the log, newest first, within
+     * the retention and at most $limit (the calls left for this run).
+     */
+    public static function backfillDue(array $pending, array $log, string $today, int $keepDays, int $limit): array
+    {
+        $from = $keepDays > 0 ? self::from($today, $keepDays) : '';
+        $due = [];
+        foreach ($pending as $date => $count) {
+            $date = (string) $date;
+            if ($date >= $from && (int) ($log[$date]['count'] ?? -1) !== (int) $count) {
+                $due[] = $date;
+            }
+        }
+        rsort($due);
+        return array_slice($due, 0, max(0, $limit));
+    }
+
+    /** Pending backfill days that are done (in the log) or outside the retention are dropped. */
+    public static function backfillLeft(array $pending, array $log, string $today, int $keepDays): array
+    {
+        $from = $keepDays > 0 ? self::from($today, $keepDays) : '';
+        return array_filter($pending, static fn ($count, $date): bool => (string) $date >= $from
+            && (int) ($log[(string) $date]['count'] ?? -1) !== (int) $count, ARRAY_FILTER_USE_BOTH);
     }
 
     /** Keep $keepDays days (0 = unlimited), newest first. */

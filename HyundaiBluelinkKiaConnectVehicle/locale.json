@@ -176,7 +176,14 @@
             "last on": "zuletzt an",
             "Last report from the car: %s. Climate and charging may have changed since then.": "Letzte Meldung des Autos: %s. Klima und Laden können sich seitdem geändert haben.",
             "last reported": "zuletzt gemeldet",
-            "Keep trip log (days, 0 = unlimited)": "Fahrtenbuch aufbewahren (Tage, 0 = unbegrenzt)"
+            "Keep trip log (days, 0 = unlimited)": "Fahrtenbuch aufbewahren (Tage, 0 = unbegrenzt)",
+            "Older trips": "Ältere Fahrten",
+            "Loading…": "Wird geladen …",
+            "Load older trips from the cloud": "Ältere Fahrten aus der Cloud nachladen",
+            "The trip log needs the dashboard tile.": "Das Fahrtenbuch braucht die Dashboard-Kachel.",
+            "The cloud did not answer. Please try again later.": "Die Cloud hat nicht geantwortet. Bitte später erneut versuchen.",
+            "%d months checked, the cloud has no older trips.": "%d Monate geprüft, die Cloud hat keine älteren Fahrten.",
+            "%d months checked, trips since %s. %d days are loaded bit by bit (up to %d per hour).": "%d Monate geprüft, Fahrten seit %s. %d Tage werden nach und nach geladen (bis zu %d pro Stunde)."
         },
         "en": {
             "Vehicle": "Vehicle",
@@ -354,7 +361,14 @@
             "last on": "last on",
             "Last report from the car: %s. Climate and charging may have changed since then.": "Last report from the car: %s. Climate and charging may have changed since then.",
             "last reported": "last reported",
-            "Keep trip log (days, 0 = unlimited)": "Keep trip log (days, 0 = unlimited)"
+            "Keep trip log (days, 0 = unlimited)": "Keep trip log (days, 0 = unlimited)",
+            "Older trips": "Older trips",
+            "Loading…": "Loading…",
+            "Load older trips from the cloud": "Load older trips from the cloud",
+            "The trip log needs the dashboard tile.": "The trip log needs the dashboard tile.",
+            "The cloud did not answer. Please try again later.": "The cloud did not answer. Please try again later.",
+            "%d months checked, the cloud has no older trips.": "%d months checked, the cloud has no older trips.",
+            "%d months checked, trips since %s. %d days are loaded bit by bit (up to %d per hour).": "%d months checked, trips since %s. %d days are loaded bit by bit (up to %d per hour)."
         }
     }
 }

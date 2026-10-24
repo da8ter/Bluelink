@@ -47,6 +47,9 @@ class HyundaiBluelinkKiaConnectVehicle extends IPSModule
         // Tile: daily statistics of the last days, model and drive type (trip log: media object)
         $this->RegisterAttributeString('DrivingDays', '{}');
         $this->RegisterAttributeString('VehicleInfo', '{}');
+        // Older trips found in the cloud (date => count) that are still to be fetched
+        $this->RegisterAttributeString('TripBackfill', '{}');
+        $this->RegisterAttributeBoolean('TripBackfillChecked', false);
 
         // Buffers
         $this->SetBuffer('StatusCache', '');
@@ -319,7 +322,7 @@ class HyundaiBluelinkKiaConnectVehicle extends IPSModule
 
     public function RequestAction($Ident, $Value)
     {
-        if ($this->tileAction((string) $Ident)) {
+        if ($this->tileAction((string) $Ident, $Value)) {
             return;
         }
 

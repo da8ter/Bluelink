@@ -118,11 +118,11 @@ Die Statusvariablen verwenden Symcon-Darstellungen.
 Die Fahrzeug-Instanz bringt eine eigene Kachel für die Kachel-Visualisierung mit. Sie passt sich an Elektroautos, Plug-in-Hybride und Verbrenner an. Welche Bereiche erscheinen, richtet sich nach dem Fahrzeugtyp aus der Fahrzeugliste und den Daten, die das Auto liefert.
 
 - **Übersicht:** Ladezustand mit Reichweite als Ring, beim Verbrenner der Tank; Laden mit Leistung und Restzeit; Ladelimits AC/DC; Verriegeln/Entriegeln (Entriegeln mit Rückfrage), Klima mit Zieltemperatur, Laden starten/stoppen; Türen, Fenster, Kofferraum, Motorhaube, 12-V-Batterie, Kilometerstand; letzte Fahrt; Standort mit Karte. Die Karte öffnet sich in der Kachel und lädt erst beim Antippen von OpenStreetMap; dabei gehen die Koordinaten an OpenStreetMap.
-- **Fahrtenbuch:** die Fahrten der letzten 31 Tage nach Tagen, je Fahrt Startzeit, Strecke, Fahr- und Standzeit, Durchschnitts- und Höchstgeschwindigkeit. Bei Elektroautos steht am Tag der Verbrauch in kWh und kWh/100 km.
+- **Fahrtenbuch:** die Fahrten nach Tagen, zuerst die letzten 31 Tage; „Ältere Fahrten“ lädt das gespeicherte Fahrtenbuch monatsweise nach, je Fahrt Startzeit, Strecke, Fahr- und Standzeit, Durchschnitts- und Höchstgeschwindigkeit. Bei Elektroautos steht am Tag der Verbrauch in kWh und kWh/100 km.
 - **Statistik:** Balken der letzten 30 Tage für Strecke, Verbrauch oder kWh/100 km, Aufteilung des Verbrauchs auf Antrieb, Klima, Bordelektronik und Batteriepflege, Rekuperation und Durchschnittswerte.
 - **Kleine Kacheln:** In 1×1 nur der Ring mit Schloss, in 2×1 und 2×2 Ring, Laden und die Knöpfe für Schloss und Klima.
 
-Im Kopf steht, wann sich das Auto zuletzt gemeldet hat. Ist das länger als drei Stunden her, kennzeichnet die Kachel Klima und Laden als „zuletzt gemeldet“. Das Fahrtenbuch bewahrt die Instanz in einem versteckten Medienobjekt „Fahrtenbuch“ auf, standardmäßig unbegrenzt (einstellbar); `BL_GetTripLog($id)` liefert es als JSON. Die Kachel zeigt die letzten 31 Tage. Fernbefehle brauchen die PIN in der Konto-Instanz. Fahrtenbuch und Tageswerte holt die Instanz stündlich zusammen mit der Statusabfrage aus der Cloud; das weckt das Auto nicht. Der Knopf „Fahrzeug wecken“ erscheint nur, wenn der Fahrzeug-Refresh erlaubt ist, und fragt vorher nach.
+Im Kopf steht, wann sich das Auto zuletzt gemeldet hat. Ist das länger als drei Stunden her, kennzeichnet die Kachel Klima und Laden als „zuletzt gemeldet“. Das Fahrtenbuch bewahrt die Instanz in einem versteckten Medienobjekt „Fahrtenbuch“ auf, standardmäßig unbegrenzt (einstellbar); `BL_GetTripLog($id)` liefert es als JSON. Beim ersten Abruf sucht die Instanz einmalig auch ältere Fahrten in der Cloud (Knopf „Ältere Fahrten aus der Cloud nachladen“ im Formular) und lädt sie nach und nach, höchstens 15 Tage pro Stunde. Die Cloud lieferte bei einem Test Fahrten der letzten gut drei Monate. Fernbefehle brauchen die PIN in der Konto-Instanz. Fahrtenbuch und Tageswerte holt die Instanz stündlich zusammen mit der Statusabfrage aus der Cloud; das weckt das Auto nicht. Der Knopf „Fahrzeug wecken“ erscheint nur, wenn der Fahrzeug-Refresh erlaubt ist, und fragt vorher nach.
 
 ### Fahrstatistik (optional)
 
@@ -167,3 +167,4 @@ Jeder abgeschlossene Tag wird einmal in die Zähler gebucht. Beim Einschalten tr
 | `BL_UpdateDrivingStats($id)` | Fahrstatistik sofort abrufen |
 | `BL_UpdateTrips($id)` | Fahrtenbuch sofort abrufen |
 | `BL_GetTripLog($id)` | Ganzes Fahrtenbuch als JSON (Datum => Tag mit Fahrten) |
+| `BL_BackfillTrips($id)` | Ältere Fahrten in der Cloud suchen und zum Nachladen vormerken |
