@@ -47,7 +47,7 @@ button:disabled { opacity: .4; cursor: default; }
 .tab { flex: 1; padding: 7px 8px; border-radius: 9px; font-size: 13px; font-weight: 600; color: var(--muted); white-space: nowrap; }
 .tab.on { background: var(--accent); color: #fff; }
 
-.body { flex: 1; min-height: 0; overflow-y: scroll; padding-right: var(--sb-pad); display: flex; flex-direction: column; gap: 12px; }
+.body { flex: 1; min-height: 0; overflow-y: scroll; overflow-x: hidden; padding-right: var(--sb-pad); display: flex; flex-direction: column; gap: 12px; }
 .scroll::-webkit-scrollbar { width: 6px; }
 .scroll::-webkit-scrollbar-track { background: transparent; }
 .scroll::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--accent) 70%, transparent); border-radius: 999px; }
@@ -55,14 +55,15 @@ button:disabled { opacity: .4; cursor: default; }
   .scroll { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--accent) 70%, transparent) transparent; }
 }
 
-.card { padding: 14px; border-radius: 16px; background: var(--surface); flex: none; }
+.card { padding: 14px; border-radius: 16px; background: var(--surface); flex: none; min-width: 0; }
 .card h3 { margin: 0 0 8px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
 .ov { display: grid; gap: 12px; }
 .ov .col { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 html.wide .ov { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
 
 /* Energie: Ring, Laden, Ladelimits */
-.hero { display: flex; align-items: center; gap: 16px; }
+/* Schmal (Smartphone): Ring über den Werten statt daneben */
+.hero { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 16px; }
 .ring { position: relative; width: 118px; height: 118px; flex: none; }
 .ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
 .ring-track { fill: none; stroke: var(--surface2); stroke-width: 10; }
@@ -70,7 +71,7 @@ html.wide .ov { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-item
 .ring-text { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
 .ring-text b { font-size: 26px; line-height: 1.1; }
 .ring-text span { font-size: 13px; color: var(--muted); font-weight: 600; }
-.hero-side { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.hero-side { flex: 1 1 210px; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
 .line { display: flex; align-items: center; gap: 8px; font-weight: 600; min-width: 0; }
 .line span { min-width: 0; }
 .line.accent { color: var(--accent); }
@@ -79,13 +80,15 @@ html.wide .ov { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-item
 .bar i { display: block; height: 100%; border-radius: 999px; }
 .limit { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--muted); }
 .stepper { display: inline-flex; align-items: center; gap: 6px; color: var(--text); }
-.stepper b { min-width: 52px; text-align: center; font-size: 14px; }
+.stepper b { min-width: 52px; text-align: center; font-size: 14px; white-space: nowrap; }
 .step { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; background: var(--surface2); }
 .step .fa-icon { width: 13px; height: 13px; }
 
 /* Fernbefehle */
 .act-row { display: flex; flex-wrap: wrap; gap: 8px; }
-.act-group { display: flex; align-items: center; gap: 8px; padding-right: 6px; border-radius: 12px; background: var(--surface); }
+.act-row > * { min-width: 0; max-width: 100%; }
+.act-group { display: flex; flex-wrap: wrap; align-items: center; gap: 0 8px; padding-right: 6px; border-radius: 12px; background: var(--surface); }
+.act-group .stepper { margin-left: auto; padding: 4px 0; }
 .act { display: inline-flex; align-items: center; gap: 8px; padding: 12px 14px; border-radius: 12px; font-weight: 700; background: var(--surface); }
 .act-group .act { background: transparent; }
 .act .fa-icon { width: 18px; height: 18px; }
@@ -98,6 +101,12 @@ html.wide .ov { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-item
 .act.ask { background: var(--orange); color: #fff; }
 .act.ask .fa-icon { color: #fff; }
 .hint { margin-top: 8px; font-size: 12px; color: var(--muted); }
+@media (max-width: 440px) {
+  .act small { display: none; }
+  .act-group { flex: 1 1 100%; justify-content: space-between; }
+  .stepper b { min-width: 46px; }
+  .summary b { font-size: 14px; }
+}
 
 /* Listen */
 .list .row { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-top: 1px solid var(--line); min-width: 0; }

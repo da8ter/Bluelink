@@ -44,7 +44,8 @@
     const w = window.innerWidth, h = window.innerHeight, root = document.documentElement.classList;
     const mini = w < 230 || h < 170;
     root.toggle('mini', mini);
-    root.toggle('compact', !mini && (h < 380 || w < 330));
+    // Klein nur bei wenig Höhe: eine schmale, hohe Kachel (Smartphone) bekommt die volle Ansicht
+    root.toggle('compact', !mini && (h < 380 || (w < 300 && h < 560)));
     root.toggle('wide', w >= 720 && h >= 380);
   }
   const mode = () => (document.documentElement.classList.contains('mini') ? 'mini'
