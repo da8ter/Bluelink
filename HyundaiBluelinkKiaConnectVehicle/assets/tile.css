@@ -40,6 +40,11 @@ button:disabled { opacity: .4; cursor: default; }
 .icon-btn { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; background: var(--surface); }
 .icon-btn .fa-icon { width: 16px; height: 16px; }
 .icon-btn.ask { background: var(--orange); color: #fff; }
+/* Nur während einer laufenden Abfrage (endet mit der Antwort, spätestens nach 30 s) */
+.icon-btn.spin:disabled { opacity: 1; }
+.icon-btn.spin .fa-icon { animation: bl-spin 1s linear infinite; color: var(--accent); }
+@keyframes bl-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .icon-btn.spin .fa-icon { animation: none; } }
 .notice { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 12px; font-size: 13px;
   color: var(--orange); background: color-mix(in srgb, var(--orange) 14%, transparent); }
 

@@ -28,6 +28,7 @@
   const confirm = {};             // Aktion -> Ende der Rückfrage (ms)
   const pending = {};             // Sollwert -> {value, timer, until}
   let busyUntil = 0;              // nach einem Tipp, bis der Befehl im Zustand steht
+  let refreshing = null;          // laufende Abfrage {updated, timer}: Symbol dreht sich nur bis zur Antwort
 
   function action(ident, value) {
     try { requestAction(ident, value); } catch (e) { /* außerhalb von Symcon */ }
@@ -348,6 +349,8 @@
     $('chips').innerHTML = '<span class="chip ' + (s.online ? 'ok' : 'bad') + '">' + esc(s.online ? T('Online') : T('Offline')) + '</span>';
     $('btnRefresh').innerHTML = I('refresh');
     $('btnRefresh').title = T('Refresh');
+    $('btnRefresh').classList.toggle('spin', !!refreshing);
+    $('btnRefresh').disabled = !!refreshing;
     const wakeAsk = Date.now() < (confirm.wake || 0);
     $('btnWake').hidden = !s.caps.vehicleRefresh;
     $('btnWake').innerHTML = I('wake');
@@ -402,6 +405,13 @@
   }
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('mapLayer').hidden) closeMap(); });
 
+  function stopRefresh() {
+    if (!refreshing) return;
+    clearTimeout(refreshing.timer);
+    refreshing = null;
+    render();
+  }
+
   function ask(key) {
     if (Date.now() < (confirm[key] || 0)) { confirm[key] = 0; return true; }
     confirm[key] = Date.now() + CONFIRM_MS;
@@ -419,7 +429,11 @@
       case 'day': if (openDays.has(v)) openDays.delete(v); else openDays.add(v); render(); break;
       case 'metric': metric = v; render(); break;
       case 'bar': selDay = v; render(); break;
-      case 'refresh': action('TileRefresh', true); break;
+      case 'refresh':
+        refreshing = { updated: s.updated, error: s.error, timer: setTimeout(stopRefresh, 30000) };
+        action('TileRefresh', true);
+        render();
+        break;
       case 'wake': if (ask('wake')) action('TileVehicleRefresh', true); break;
       case 'lock':
         if (s.locked && !ask('unlock')) break;
@@ -456,6 +470,8 @@
       if (pending[key] && pending[key].value === value) pending[key].until = 0;
     });
     if (msg.command) busyUntil = 0;
+    // Neuer Abruf oder Fehler beendet die Drehung
+    if (refreshing && (msg.updated !== refreshing.updated || msg.error !== refreshing.error)) { clearTimeout(refreshing.timer); refreshing = null; }
     render();
   }
   window.handleMessage = receive;
