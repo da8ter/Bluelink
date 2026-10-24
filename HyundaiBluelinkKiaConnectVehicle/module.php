@@ -70,8 +70,8 @@ class HyundaiBluelinkKiaConnectVehicle extends IPSModule
         $doorsLockedPresentation = [
             'PRESENTATION' => VARIABLE_PRESENTATION_ENUMERATION,
             'OPTIONS'      => json_encode([
-                ['Value' => false, 'Caption' => $this->Translate('Unlocked'), 'Icon' => 'LockOpen', 'Color' => 0xFF0000, 'IconActive' => false],
-                ['Value' => true, 'Caption' => $this->Translate('Locked'), 'Icon' => 'Lock', 'Color' => 0x00FF00, 'IconActive' => false],
+                ['Value' => false, 'Caption' => $this->Translate('Unlocked'), 'IconValue' => 'LockOpen', 'Color' => 0xFF0000, 'IconActive' => false],
+                ['Value' => true, 'Caption' => $this->Translate('Locked'), 'IconValue' => 'Lock', 'Color' => 0x00FF00, 'IconActive' => false],
             ], JSON_UNESCAPED_UNICODE),
         ];
         $createInterval = static function (int $min, int $max, string $text, int $color): array {
@@ -140,12 +140,12 @@ class HyundaiBluelinkKiaConnectVehicle extends IPSModule
         ], 35);
         $this->RegisterVariableInteger('ChargeLimitAC', $this->Translate('Charge Limit AC'), [
             'PRESENTATION' => VARIABLE_PRESENTATION_SLIDER, 'ICON' => 'Battery', 'SUFFIX' => ' %',
-            'MIN' => 50, 'MAX' => 100, 'STEP' => 10,
+            'MIN' => 50, 'MAX' => 100, 'STEP_SIZE' => 10,
         ], 36);
         $this->EnableAction('ChargeLimitAC');
         $this->RegisterVariableInteger('ChargeLimitDC', $this->Translate('Charge Limit DC'), [
             'PRESENTATION' => VARIABLE_PRESENTATION_SLIDER, 'ICON' => 'Battery', 'SUFFIX' => ' %',
-            'MIN' => 50, 'MAX' => 100, 'STEP' => 10,
+            'MIN' => 50, 'MAX' => 100, 'STEP_SIZE' => 10,
         ], 37);
         $this->EnableAction('ChargeLimitDC');
 
@@ -153,14 +153,13 @@ class HyundaiBluelinkKiaConnectVehicle extends IPSModule
         $this->RegisterVariableBoolean('ClimateOn', $this->Translate('Climate'), [
             'PRESENTATION' => VARIABLE_PRESENTATION_SWITCH,
             'ICON_TRUE' => 'Climate', 'ICON_FALSE' => 'Climate',
-            'CAPTION_TRUE' => $this->Translate('On'), 'CAPTION_FALSE' => $this->Translate('Off'),
-            'COLOR_TRUE' => 0x00FF00, 'COLOR_FALSE' => 0x808080,
+            'GLOW_COLOR' => 0x00FF00,
         ], 40);
         $this->EnableAction('ClimateOn');
         $this->RegisterVariableFloat('TargetTempC', $this->Translate('Target Temperature'), [
             'PRESENTATION' => VARIABLE_PRESENTATION_SLIDER,
             'ICON' => 'Temperature', 'SUFFIX' => ' °C',
-            'MIN' => 14.0, 'MAX' => 30.0, 'STEP' => 0.5, 'DIGITS' => 1,
+            'MIN' => 14.0, 'MAX' => 30.0, 'STEP_SIZE' => 0.5, 'DIGITS' => 1,
         ], 41);
         $this->EnableAction('TargetTempC');
         $this->RegisterVariableBoolean('Defrost', $this->Translate('Defrost'), $yesNoPresentation, 42);
@@ -170,8 +169,7 @@ class HyundaiBluelinkKiaConnectVehicle extends IPSModule
         $this->RegisterVariableBoolean('ChargeAction', $this->Translate('Charging'), [
             'PRESENTATION' => VARIABLE_PRESENTATION_SWITCH,
             'ICON_TRUE' => 'Battery', 'ICON_FALSE' => 'Battery',
-            'CAPTION_TRUE' => $this->Translate('Start'), 'CAPTION_FALSE' => $this->Translate('Stop'),
-            'COLOR_TRUE' => 0x00FF00, 'COLOR_FALSE' => 0xFF0000,
+            'GLOW_COLOR' => 0x00FF00,
         ], 44);
         $this->EnableAction('ChargeAction');
 
