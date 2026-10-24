@@ -373,6 +373,27 @@
     render();
   }
 
+  // Karte als Ebene in der Kachel: window.open verlässt in der Symcon-App die Kachel ohne Rückweg.
+  // Die eingebettete OpenStreetMap lädt erst beim Öffnen und wird beim Schließen wieder entladen.
+  function openMap(pos) {
+    if (!pos) return;
+    const lat = Number(pos.lat), lon = Number(pos.lon), dLat = 0.004, dLon = 0.007;
+    if (!isFinite(lat) || !isFinite(lon)) return;
+    $('mapFrame').title = T('Position');
+    $('mapFrame').src = 'https://www.openstreetmap.org/export/embed.html?bbox=' + [lon - dLon, lat - dLat, lon + dLon, lat + dLat].join(',')
+      + '&layer=mapnik&marker=' + lat + ',' + lon;
+    $('mapClose').innerHTML = I('close');
+    $('mapClose').title = T('Close');
+    $('mapLayer').hidden = false;
+    document.querySelector('.app').classList.add('map-open');
+  }
+  function closeMap() {
+    $('mapLayer').hidden = true;
+    document.querySelector('.app').classList.remove('map-open');
+    $('mapFrame').src = 'about:blank';
+  }
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('mapLayer').hidden) closeMap(); });
+
   function ask(key) {
     if (Date.now() < (confirm[key] || 0)) { confirm[key] = 0; return true; }
     confirm[key] = Date.now() + CONFIRM_MS;
@@ -411,9 +432,8 @@
         setpoint(key, l, 'ChargeLimit' + key);
         break;
       }
-      case 'map':
-        if (s.pos) window.open('https://www.openstreetmap.org/?mlat=' + s.pos.lat + '&mlon=' + s.pos.lon + '#map=17/' + s.pos.lat + '/' + s.pos.lon, '_blank', 'noopener');
-        break;
+      case 'map': openMap(s.pos); break;
+      case 'mapclose': closeMap(); break;
     }
   });
 

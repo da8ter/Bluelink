@@ -168,7 +168,8 @@
             "Show dashboard tile (instead of the variable list)": "Dashboard-Kachel anzeigen (statt der Variablenliste)",
             "Shows charge or fuel level, remote actions, vehicle status, trip log and statistics in the tile visualization. Adapts to electric cars, plug-in hybrids and combustion cars. Trip log and daily values are fetched hourly from the cloud (does not wake the car).": "Zeigt Ladezustand bzw. Tank, Fernbefehle, Fahrzeugzustand, Fahrtenbuch und Statistik in der Kachel-Visualisierung. Passt sich an Elektroautos, Plug-in-Hybride und Verbrenner an. Fahrtenbuch und Tageswerte werden stündlich aus der Cloud geholt (weckt das Auto nicht).",
             "Charging now": "Lädt",
-            "Avg. speed": "Ø Geschwindigkeit"
+            "Avg. speed": "Ø Geschwindigkeit",
+            "Close": "Schließen"
         },
         "en": {
             "Vehicle": "Vehicle",
@@ -338,7 +339,8 @@
             "Show dashboard tile (instead of the variable list)": "Show dashboard tile (instead of the variable list)",
             "Shows charge or fuel level, remote actions, vehicle status, trip log and statistics in the tile visualization. Adapts to electric cars, plug-in hybrids and combustion cars. Trip log and daily values are fetched hourly from the cloud (does not wake the car).": "Shows charge or fuel level, remote actions, vehicle status, trip log and statistics in the tile visualization. Adapts to electric cars, plug-in hybrids and combustion cars. Trip log and daily values are fetched hourly from the cloud (does not wake the car).",
             "Charging now": "Charging now",
-            "Avg. speed": "Avg. speed"
+            "Avg. speed": "Avg. speed",
+            "Close": "Close"
         }
     }
 }

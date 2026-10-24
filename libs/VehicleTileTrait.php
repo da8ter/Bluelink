@@ -23,7 +23,7 @@ trait VehicleTileTrait
         'Trip log', 'kWh/100 km', 'No trips yet', 'Trips', 'Distance', 'Driving time', 'Last 30 days', '%d trip',
         '%d trips', '%s idle', 'No data yet', 'Consumption', 'per driving day', 'Regeneration', 'Updated %s',
         'Online', 'Offline', 'Refresh', 'Tap again to wake the vehicle', 'Wake vehicle (drains the 12V battery)',
-        'Overview', 'Statistics', 'Drive', 'Electronics', 'Battery care', 'Avg. speed',
+        'Overview', 'Statistics', 'Drive', 'Electronics', 'Battery care', 'Avg. speed', 'Close',
     ];
 
     private function tileEnabled(): bool

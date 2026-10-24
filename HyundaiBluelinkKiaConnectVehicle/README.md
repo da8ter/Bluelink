@@ -116,7 +116,7 @@ Die Statusvariablen verwenden Symcon-Darstellungen.
 
 Die Fahrzeug-Instanz bringt eine eigene Kachel für die Kachel-Visualisierung mit. Sie passt sich an Elektroautos, Plug-in-Hybride und Verbrenner an. Welche Bereiche erscheinen, richtet sich nach dem Fahrzeugtyp aus der Fahrzeugliste und den Daten, die das Auto liefert.
 
-- **Übersicht:** Ladezustand mit Reichweite als Ring, beim Verbrenner der Tank; Laden mit Leistung und Restzeit; Ladelimits AC/DC; Verriegeln/Entriegeln (Entriegeln mit Rückfrage), Klima mit Zieltemperatur, Laden starten/stoppen; Türen, Fenster, Kofferraum, Motorhaube, 12-V-Batterie, Kilometerstand; letzte Fahrt; Standort mit Link zur Karte.
+- **Übersicht:** Ladezustand mit Reichweite als Ring, beim Verbrenner der Tank; Laden mit Leistung und Restzeit; Ladelimits AC/DC; Verriegeln/Entriegeln (Entriegeln mit Rückfrage), Klima mit Zieltemperatur, Laden starten/stoppen; Türen, Fenster, Kofferraum, Motorhaube, 12-V-Batterie, Kilometerstand; letzte Fahrt; Standort mit Karte. Die Karte öffnet sich in der Kachel und lädt erst beim Antippen von OpenStreetMap; dabei gehen die Koordinaten an OpenStreetMap.
 - **Fahrtenbuch:** alle Fahrten der letzten 31 Tage nach Tagen, je Fahrt Startzeit, Strecke, Fahr- und Standzeit, Durchschnitts- und Höchstgeschwindigkeit. Bei Elektroautos steht am Tag der Verbrauch in kWh und kWh/100 km.
 - **Statistik:** Balken der letzten 30 Tage für Strecke, Verbrauch oder kWh/100 km, Aufteilung des Verbrauchs auf Antrieb, Klima, Bordelektronik und Batteriepflege, Rekuperation und Durchschnittswerte.
 - **Kleine Kacheln:** In 1×1 nur der Ring mit Schloss, in 2×1 und 2×2 Ring, Laden und die Knöpfe für Schloss und Klima.
