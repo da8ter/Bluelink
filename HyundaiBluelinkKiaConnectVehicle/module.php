@@ -223,6 +223,9 @@ class HyundaiBluelinkKiaConnectVehicle extends IPSModule
         $this->RegisterVariableString('LastCommandTimestamp', $this->Translate('Last Command'), [
             'PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION, 'ICON' => 'Clock',
         ], 71);
+        $this->RegisterVariableString('VehicleTimestamp', $this->Translate('Vehicle Data From'), [
+            'PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION, 'ICON' => 'Clock',
+        ], 76);
         $this->RegisterVariableBoolean('ApiOnline', $this->Translate('API Online'), [
             'PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION,
             'OPTIONS'      => json_encode([
@@ -695,6 +698,9 @@ class HyundaiBluelinkKiaConnectVehicle extends IPSModule
         $status = $result['status'] ?? [];
         $this->SetBuffer('StatusCache', json_encode($status));
         $this->ApplyStatusToVariables($status);
+        if ((int) ($status['VehicleTime'] ?? 0) > 0) {
+            $this->SetValue('VehicleTimestamp', date('d.m.Y H:i:s', (int) $status['VehicleTime']));
+        }
         $this->SetValue('ApiOnline', true);
         $this->SetValue('ErrorText', '');
         $this->SetValue('LastUpdateTimestamp', date('d.m.Y H:i:s'));

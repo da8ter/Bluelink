@@ -77,6 +77,10 @@
     return d.toLocaleDateString(undefined, { weekday: 'short', day: '2-digit', month: '2-digit' });
   }
   const levelColor = p => (p < 20 ? 'var(--red)' : p < 40 ? 'var(--orange)' : 'var(--green)');
+  // Die Cloud liefert den zuletzt gemeldeten Zustand. Ist die Meldung des Autos älter, können
+  // Klima und Laden inzwischen anders sein (ein geparktes Auto meldet sich nicht von selbst).
+  const STALE_S = 3 * 3600;
+  const stale = s => s.carTime > 0 && now() - s.carTime > STALE_S;
 
   // ── Bausteine ──────────────────────────────────────────────────────
 
@@ -91,7 +95,7 @@
   function chargingLine(s) {
     if (!s.caps.ev) return '';
     if (s.charging === 2) {
-      const parts = [T('Charging now')];
+      const parts = [T('Charging now') + (stale(s) ? ' (' + T('last reported') + ')' : '')];
       if (s.power > 0) parts.push(num(s.power, 1) + ' kW');
       if (s.remaining > 0) parts.push(T('%s left', dur(s.remaining)));
       return '<div class="line accent">' + I('bolt') + '<span>' + esc(parts.join(' · ')) + '</span></div>';
@@ -150,8 +154,9 @@
       ? '<button class="act ok' + (unlockAsk ? ' ask' : '') + '" data-act="lock"' + dis + '>' + I(unlockAsk ? 'lockOpen' : 'lock') + '<span>' + esc(unlockAsk ? T('Tap again to unlock') : T('Locked')) + '</span></button>'
       : '<button class="act warn" data-act="lock"' + dis + '>' + I('lockOpen') + '<span>' + esc(T('Unlocked')) + '</span><small>' + esc(T('Lock')) + '</small></button>';
     const temp = pendingValue('temp', s.target || 22);
-    const climateBtn = '<button class="act' + (s.climate ? ' on' : '') + '" data-act="climate"' + dis + '>' + I('climate')
-      + '<span>' + esc(T('Climate')) + '</span><small>' + esc(s.climate ? T('On') : T('Off')) + '</small></button>';
+    const old = stale(s);
+    const climateBtn = '<button class="act' + (s.climate ? (old ? ' was-on' : ' on') : '') + '" data-act="climate"' + dis + '>' + I('climate')
+      + '<span>' + esc(T('Climate')) + '</span><small>' + esc(s.climate ? (old ? T('last on') : T('On')) : T('Off')) + '</small></button>';
     if (small) return '<div class="act-row">' + lockBtn + climateBtn + '</div>';
     const climate = '<div class="act-group">' + climateBtn
       + '<span class="stepper">'
@@ -165,8 +170,9 @@
         + '<span>' + esc(charging ? T('Stop charging') : T('Start charging')) + '</span></button>';
     }
     let hint = '';
-    if (!s.caps.pin) hint = '<div class="hint">' + esc(T('Remote actions need the PIN in the account settings')) + '</div>';
-    else if (busy(s)) hint = '<div class="hint">' + esc(T('Command running…')) + '</div>';
+    if (old && (s.climate || s.charging === 2)) hint += '<div class="hint">' + esc(T('Last report from the car: %s. Climate and charging may have changed since then.', ago(s.carTime))) + '</div>';
+    if (!s.caps.pin) hint += '<div class="hint">' + esc(T('Remote actions need the PIN in the account settings')) + '</div>';
+    else if (busy(s)) hint += '<div class="hint">' + esc(T('Command running…')) + '</div>';
     return '<section class="card actions"><div class="act-row">' + lockBtn + climate + charge + '</div>' + hint + '</section>';
   }
 
@@ -336,7 +342,9 @@
     const s = state, m = mode();
     const title = [s.vehicle.model, s.vehicle.year].filter(Boolean).join(' · ');
     $('model').textContent = title || T('Vehicle');
-    $('sub').textContent = T('Updated %s', ago(s.updated));
+    // Stand des Autos, nicht der Cloud-Abfrage; die steht im Tooltip
+    $('sub').textContent = s.carTime > 0 ? T('Vehicle data: %s', ago(s.carTime)) : T('Updated %s', ago(s.updated));
+    $('sub').title = T('Cloud queried %s', ago(s.updated));
     $('chips').innerHTML = '<span class="chip ' + (s.online ? 'ok' : 'bad') + '">' + esc(s.online ? T('Online') : T('Offline')) + '</span>';
     $('btnRefresh').innerHTML = I('refresh');
     $('btnRefresh').title = T('Refresh');

@@ -23,7 +23,8 @@ trait VehicleTileTrait
         'Trip log', 'kWh/100 km', 'No trips yet', 'Trips', 'Distance', 'Driving time', 'Last 30 days', '%d trip',
         '%d trips', '%s idle', 'No data yet', 'Consumption', 'per driving day', 'Regeneration', 'Updated %s',
         'Online', 'Offline', 'Refresh', 'Tap again to wake the vehicle', 'Wake vehicle (drains the 12V battery)',
-        'Overview', 'Statistics', 'Drive', 'Electronics', 'Battery care', 'Avg. speed', 'Close',
+        'Overview', 'Statistics', 'Drive', 'Electronics', 'Battery care', 'Avg. speed', 'Close', 'Vehicle data: %s', 'Cloud queried %s', 'last on',
+        'Last report from the car: %s. Climate and charging may have changed since then.', 'last reported',
     ];
 
     private function tileEnabled(): bool
@@ -198,6 +199,7 @@ trait VehicleTileTrait
             'online'    => (bool) $value('ApiOnline', false),
             'error'     => (string) $value('ErrorText', ''),
             'updated'   => $timestamp((string) $value('LastUpdateTimestamp', ''), 'd.m.Y H:i:s'),
+            'carTime'   => $timestamp((string) $value('VehicleTimestamp', ''), 'd.m.Y H:i:s'),
             'command'   => !empty($command['active']) ? (string) ($command['type'] ?? '') : '',
             'soc'       => $soc,
             'range'     => (float) $value('RangeKm', 0.0),

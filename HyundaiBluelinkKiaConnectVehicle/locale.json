@@ -169,7 +169,13 @@
             "Shows charge or fuel level, remote actions, vehicle status, trip log and statistics in the tile visualization. Adapts to electric cars, plug-in hybrids and combustion cars. Trip log and daily values are fetched hourly from the cloud (does not wake the car).": "Zeigt Ladezustand bzw. Tank, Fernbefehle, Fahrzeugzustand, Fahrtenbuch und Statistik in der Kachel-Visualisierung. Passt sich an Elektroautos, Plug-in-Hybride und Verbrenner an. Fahrtenbuch und Tageswerte werden stündlich aus der Cloud geholt (weckt das Auto nicht).",
             "Charging now": "Lädt",
             "Avg. speed": "Ø Geschwindigkeit",
-            "Close": "Schließen"
+            "Close": "Schließen",
+            "Vehicle Data From": "Fahrzeugdaten vom",
+            "Vehicle data: %s": "Fahrzeugdaten: %s",
+            "Cloud queried %s": "Cloud abgefragt: %s",
+            "last on": "zuletzt an",
+            "Last report from the car: %s. Climate and charging may have changed since then.": "Letzte Meldung des Autos: %s. Klima und Laden können sich seitdem geändert haben.",
+            "last reported": "zuletzt gemeldet"
         },
         "en": {
             "Vehicle": "Vehicle",
@@ -340,7 +346,13 @@
             "Shows charge or fuel level, remote actions, vehicle status, trip log and statistics in the tile visualization. Adapts to electric cars, plug-in hybrids and combustion cars. Trip log and daily values are fetched hourly from the cloud (does not wake the car).": "Shows charge or fuel level, remote actions, vehicle status, trip log and statistics in the tile visualization. Adapts to electric cars, plug-in hybrids and combustion cars. Trip log and daily values are fetched hourly from the cloud (does not wake the car).",
             "Charging now": "Charging now",
             "Avg. speed": "Avg. speed",
-            "Close": "Close"
+            "Close": "Close",
+            "Vehicle Data From": "Vehicle Data From",
+            "Vehicle data: %s": "Vehicle data: %s",
+            "Cloud queried %s": "Cloud queried %s",
+            "last on": "last on",
+            "Last report from the car: %s. Climate and charging may have changed since then.": "Last report from the car: %s. Climate and charging may have changed since then.",
+            "last reported": "last reported"
         }
     }
 }

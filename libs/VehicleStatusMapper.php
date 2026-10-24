@@ -55,6 +55,8 @@ class VehicleStatusMapper
 
             // Timestamps
             'LastUpdateTimestamp' => self::getTimestamp($vehicleStatus),
+            // Time of the car's own last report (compact value in local time, as the EU API sends it)
+            'VehicleTime'         => self::parseVehicleTime((string) ($vehicleStatus['time'] ?? $vehicleStatus['lastStatusDate'] ?? ''), 'Europe/Berlin'),
         ];
     }
 
@@ -189,6 +191,8 @@ class VehicleStatusMapper
 
             // Timestamps
             'LastUpdateTimestamp' => date('c'),
+            // CCS2 'Date' is UTC
+            'VehicleTime'         => self::parseVehicleTime((string) ($state['Date'] ?? ''), 'UTC'),
         ];
     }
 
@@ -346,6 +350,17 @@ class VehicleStatusMapper
             return $numeric;
         }
         return 20.0;
+    }
+
+    /** Car report time as Unix time: compact 'YmdHis[.fff]' in $zone or an RFC date; 0 = unknown. */
+    private static function parseVehicleTime(string $value, string $zone): int
+    {
+        if (preg_match('/^(\d{14})/', $value, $m)) {
+            $date = DateTime::createFromFormat('YmdHis', $m[1], new DateTimeZone($zone));
+            return $date === false ? 0 : $date->getTimestamp();
+        }
+        $time = $value !== '' ? strtotime($value) : false;
+        return $time === false ? 0 : $time;
     }
 
     private static function getTimestamp(array $data): string

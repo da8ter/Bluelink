@@ -121,7 +121,7 @@ Die Fahrzeug-Instanz bringt eine eigene Kachel für die Kachel-Visualisierung mi
 - **Statistik:** Balken der letzten 30 Tage für Strecke, Verbrauch oder kWh/100 km, Aufteilung des Verbrauchs auf Antrieb, Klima, Bordelektronik und Batteriepflege, Rekuperation und Durchschnittswerte.
 - **Kleine Kacheln:** In 1×1 nur der Ring mit Schloss, in 2×1 und 2×2 Ring, Laden und die Knöpfe für Schloss und Klima.
 
-Fernbefehle brauchen die PIN in der Konto-Instanz. Fahrtenbuch und Tageswerte holt die Instanz stündlich zusammen mit der Statusabfrage aus der Cloud; das weckt das Auto nicht. Der Knopf „Fahrzeug wecken“ erscheint nur, wenn der Fahrzeug-Refresh erlaubt ist, und fragt vorher nach.
+Im Kopf steht, wann sich das Auto zuletzt gemeldet hat. Ist das länger als drei Stunden her, kennzeichnet die Kachel Klima und Laden als „zuletzt gemeldet“. Fernbefehle brauchen die PIN in der Konto-Instanz. Fahrtenbuch und Tageswerte holt die Instanz stündlich zusammen mit der Statusabfrage aus der Cloud; das weckt das Auto nicht. Der Knopf „Fahrzeug wecken“ erscheint nur, wenn der Fahrzeug-Refresh erlaubt ist, und fragt vorher nach.
 
 ### Fahrstatistik (optional)
 
@@ -141,7 +141,8 @@ Jeder abgeschlossene Tag wird einmal in die Zähler gebucht. Beim Einschalten tr
 
 | Ident | Typ | Beschreibung |
 |-------|-----|-------------|
-| LastUpdateTimestamp | string | Letztes Update |
+| LastUpdateTimestamp | string | Letztes Update (Zeit der Cloud-Abfrage) |
+| VehicleTimestamp | string | Fahrzeugdaten vom: Zeit der letzten Meldung des Autos. Ein geparktes Auto meldet sich nur selten; ältere Werte für Klima und Laden können überholt sein. |
 | LastCommandTimestamp | string | Letzter Befehl |
 | ApiOnline | bool | API-Verfügbarkeit |
 | ErrorText | string | Letzter Fehler |
