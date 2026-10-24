@@ -430,6 +430,11 @@ class HyundaiBluelinkKiaConnectVehicle extends IPSModule
                 $value += $plan['now'][$key];
                 $variableID = $this->GetIDForIdent($ident);
                 if ($archive > 0 && $entries !== [] && AC_GetLoggingStatus($archive, $variableID)) {
+                    if ($lastWrite === 0) {
+                        // Switching logging on stores the initial 0 with the current time; after the
+                        // backfill that would read as a counter reset today.
+                        AC_DeleteVariableData($archive, $variableID, 0, time());
+                    }
                     AC_AddLoggedValues($archive, $variableID, $entries);
                     AC_ReAggregateVariable($archive, $variableID);
                 }
