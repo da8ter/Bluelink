@@ -129,6 +129,19 @@ class BluelinkApiClient
      * Driving history from the cloud (does not wake the car).
      * periodTarget 0 = last 30 days incl. drivingInfoDetail per day, 1 = all time.
      */
+    /**
+     * Trip information from the cloud: periodType 0 = month ('Ym', trips per day),
+     * 1 = day ('Ymd', single trips).
+     */
+    public function getTripInfo(string $vehicleId, int $periodType, string $date): array
+    {
+        $payload = $periodType === 0
+            ? ['tripPeriodType' => 0, 'setTripMonth' => $date]
+            : ['tripPeriodType' => 1, 'setTripDay' => $date];
+        $response = $this->request('POST', '/api/v1/spa/vehicles/' . $vehicleId . '/tripinfo', $payload);
+        return $response['resMsg'] ?? [];
+    }
+
     public function getDrivingHistory(string $vehicleId, int $periodTarget = 0): array
     {
         $response = $this->request('POST', '/api/v1/spa/vehicles/' . $vehicleId . '/drvhistory', [

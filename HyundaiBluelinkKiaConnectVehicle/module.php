@@ -3,9 +3,13 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../libs/DrivingStats.php';
+require_once __DIR__ . '/../libs/TripLog.php';
+require_once __DIR__ . '/../libs/VehicleTileTrait.php';
 
 class HyundaiBluelinkKiaConnectVehicle extends IPSModule
 {
+    use VehicleTileTrait;
+
     private const DEFAULT_POLL_INTERVAL = 300;
     private const DEFAULT_FORCE_REFRESH_INTERVAL = 0;
     private const DEFAULT_CHARGING_POLL_INTERVAL = 900; // 15 minutes
@@ -33,10 +37,16 @@ class HyundaiBluelinkKiaConnectVehicle extends IPSModule
         $this->RegisterPropertyBoolean('DebugEnabled', false);
         $this->RegisterPropertyInteger('DebugLevel', 0);
         $this->RegisterPropertyBoolean('DrivingStats', false);
+        $this->RegisterPropertyBoolean('Tile', true);
 
         // Days already booked into the driving statistics counters
         $this->RegisterAttributeString('DrivingStatsBooked', '{}');
         $this->RegisterAttributeInteger('DrivingStatsLastWrite', 0);
+
+        // Tile: daily statistics of the last days, trip log, model and drive type
+        $this->RegisterAttributeString('DrivingDays', '{}');
+        $this->RegisterAttributeString('TripLog', '{}');
+        $this->RegisterAttributeString('VehicleInfo', '{}');
 
         // Buffers
         $this->SetBuffer('StatusCache', '');
@@ -50,6 +60,7 @@ class HyundaiBluelinkKiaConnectVehicle extends IPSModule
         $this->RegisterTimer('ForceRefreshStatus', 0, 'BL_ForceRefreshStatus($_IPS[\'TARGET\']);');
         $this->RegisterTimer('PollCommand', 0, 'BL_PollCommand($_IPS[\'TARGET\']);');
         $this->RegisterTimer('RefreshAfterCommand', 0, 'BL_RefreshAfterCommand($_IPS[\'TARGET\']);');
+        $this->RegisterTimer('TilePush', 0, 'BL_TilePush($_IPS[\'TARGET\']);');
 
         $createValuePresentationEntry = static function ($value, string $caption): array {
             return [
@@ -282,6 +293,7 @@ class HyundaiBluelinkKiaConnectVehicle extends IPSModule
         }
 
         $this->MaintainDrivingStatsVariables();
+        $this->registerTileMessages();
 
         // Set status
         if (empty($vin) || empty($this->ReadPropertyString('VehicleId'))) {
@@ -295,6 +307,8 @@ class HyundaiBluelinkKiaConnectVehicle extends IPSModule
     {
         if ($Message === IPS_KERNELSTARTED) {
             $this->ApplyChanges();
+        } elseif ($Message === VM_UPDATE) {
+            $this->tileChanged();
         }
     }
 
@@ -302,6 +316,10 @@ class HyundaiBluelinkKiaConnectVehicle extends IPSModule
 
     public function RequestAction($Ident, $Value)
     {
+        if ($this->tileAction((string) $Ident)) {
+            return;
+        }
+
         $controlActions = ['DoorsLocked', 'ClimateOn', 'TargetTempC', 'ChargeAction', 'ChargeLimitAC', 'ChargeLimitDC'];
         if (in_array($Ident, $controlActions) && !$this->HasPIN()) {
             $this->SetValue('ErrorText', $this->Translate('PIN not configured. Remote actions require a PIN in the account settings.'));
@@ -381,20 +399,27 @@ class HyundaiBluelinkKiaConnectVehicle extends IPSModule
         $this->FetchAndApplyStatus($vehicleId);
         $this->FetchAndApplyLocation($vehicleId);
 
-        if ($this->ReadPropertyBoolean('DrivingStats')
+        if ($this->tileEnabled() && $this->ReadAttributeString('VehicleInfo') === '{}') {
+            $this->refreshVehicleInfo();
+        }
+
+        // Daily statistics and trip log change at most a few times a day: hourly is enough
+        if (($this->ReadPropertyBoolean('DrivingStats') || $this->tileEnabled())
             && time() - (int) $this->GetBuffer('LastDrivingStats') >= self::DRIVING_STATS_INTERVAL) {
             $this->UpdateDrivingStats();
+            $this->UpdateTrips();
         }
     }
 
     /**
-     * Fetches the daily driving statistics of the last 30 days (cloud only, does not wake the car),
-     * books completed days into the counters and backfills them into the archive.
+     * Fetches the daily driving statistics of the last 30 days (cloud only, does not wake the car).
+     * The tile shows them; with the option "DrivingStats" completed days are also booked into the
+     * counters and backfilled into the archive.
      */
     public function UpdateDrivingStats(): void
     {
         $vehicleId = $this->ReadPropertyString('VehicleId');
-        if (empty($vehicleId) || !$this->ReadPropertyBoolean('DrivingStats')) {
+        if (empty($vehicleId) || !($this->ReadPropertyBoolean('DrivingStats') || $this->tileEnabled())) {
             return;
         }
         $this->SetBuffer('LastDrivingStats', (string) time());
@@ -406,6 +431,11 @@ class HyundaiBluelinkKiaConnectVehicle extends IPSModule
         }
 
         $days = DrivingStats::parseDays($result['days'] ?? []);
+        $this->WriteAttributeString('DrivingDays', json_encode((object) $days));
+        $this->tileChanged();
+        if (!$this->ReadPropertyBoolean('DrivingStats')) {
+            return;
+        }
         $booked = json_decode($this->ReadAttributeString('DrivingStatsBooked'), true) ?: [];
         $lastWrite = $this->ReadAttributeInteger('DrivingStatsLastWrite');
         $plan = DrivingStats::plan($days, $booked, $lastWrite, date('Y-m-d'));
@@ -839,6 +869,7 @@ class HyundaiBluelinkKiaConnectVehicle extends IPSModule
                 ]));
                 $this->SetTimerInterval('PollCommand', self::COMMAND_POLL_INTERVAL * 1000);
                 $this->SetValue('ErrorText', '');
+                $this->tileChanged();
             } else {
                 $this->SetValue('ErrorText', $result['error'] ?? $this->Translate('Command failed'));
             }

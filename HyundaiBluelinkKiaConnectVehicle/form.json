@@ -62,6 +62,21 @@
         },
         {
             "type": "ExpansionPanel",
+            "caption": "Dashboard tile",
+            "items": [
+                {
+                    "type": "CheckBox",
+                    "name": "Tile",
+                    "caption": "Show dashboard tile (instead of the variable list)"
+                },
+                {
+                    "type": "Label",
+                    "caption": "Shows charge or fuel level, remote actions, vehicle status, trip log and statistics in the tile visualization. Adapts to electric cars, plug-in hybrids and combustion cars. Trip log and daily values are fetched hourly from the cloud (does not wake the car)."
+                }
+            ]
+        },
+        {
+            "type": "ExpansionPanel",
             "caption": "Driving statistics",
             "items": [
                 {

@@ -10,6 +10,7 @@ Funktionen:
 - Remote-Aktionen: Verriegeln, Entriegeln, Klimaanlage, Laden
 - Standortabfrage
 - EV-Daten: Ladezustand, Reichweite, Ladestatus
+- Dashboard-Kachel für die Kachel-Visualisierung mit Fernbefehlen, Fahrtenbuch und Statistik
 - Fahrstatistik (optional): Tageswerte für Verbrauch je Komponente, Rekuperation und Strecke, als Zähler mit Nachtrag ins Archiv
 
 ## Voraussetzungen
@@ -38,6 +39,7 @@ Funktionen:
 | Refresh On Action | bool | false | Status nach Remote-Aktion automatisch aktualisieren |
 | Faster Vehicle Polling While Charging | bool | false | Schnelleres Fahrzeug-Polling während des Ladens |
 | Charging Poll Interval | integer | 900 | Fahrzeug-Refresh-Intervall während des Ladens in Sekunden (min. 300) |
+| Dashboard Tile | bool | true | Dashboard-Kachel statt der Variablenliste (siehe unten) |
 | Driving Statistics | bool | false | Tageswerte der Fahrstatistik abrufen (siehe unten) |
 | Debug Enabled | bool | false | Debug-Ausgabe aktivieren |
 
@@ -110,6 +112,17 @@ Die Statusvariablen verwenden Symcon-Darstellungen.
 | FuelLevelPercent | int | Value Presentation | Tankfüllstand (nur Verbrenner/PHEV) |
 | Battery12VPercent | int | Value Presentation | 12V-Batterie |
 
+### Dashboard-Kachel
+
+Die Fahrzeug-Instanz bringt eine eigene Kachel für die Kachel-Visualisierung mit. Sie passt sich an Elektroautos, Plug-in-Hybride und Verbrenner an. Welche Bereiche erscheinen, richtet sich nach dem Fahrzeugtyp aus der Fahrzeugliste und den Daten, die das Auto liefert.
+
+- **Übersicht:** Ladezustand mit Reichweite als Ring, beim Verbrenner der Tank; Laden mit Leistung und Restzeit; Ladelimits AC/DC; Verriegeln/Entriegeln (Entriegeln mit Rückfrage), Klima mit Zieltemperatur, Laden starten/stoppen; Türen, Fenster, Kofferraum, Motorhaube, 12-V-Batterie, Kilometerstand; letzte Fahrt; Standort mit Link zur Karte.
+- **Fahrtenbuch:** alle Fahrten der letzten 31 Tage nach Tagen, je Fahrt Startzeit, Strecke, Fahr- und Standzeit, Durchschnitts- und Höchstgeschwindigkeit. Bei Elektroautos steht am Tag der Verbrauch in kWh und kWh/100 km.
+- **Statistik:** Balken der letzten 30 Tage für Strecke, Verbrauch oder kWh/100 km, Aufteilung des Verbrauchs auf Antrieb, Klima, Bordelektronik und Batteriepflege, Rekuperation und Durchschnittswerte.
+- **Kleine Kacheln:** In 1×1 nur der Ring mit Schloss, in 2×1 und 2×2 Ring, Laden und die Knöpfe für Schloss und Klima.
+
+Fernbefehle brauchen die PIN in der Konto-Instanz. Fahrtenbuch und Tageswerte holt die Instanz stündlich zusammen mit der Statusabfrage aus der Cloud; das weckt das Auto nicht. Der Knopf „Fahrzeug wecken“ erscheint nur, wenn der Fahrzeug-Refresh erlaubt ist, und fragt vorher nach.
+
 ### Fahrstatistik (optional)
 
 Mit „Tageswerte (Energie je Komponente, Strecke)“ holt die Instanz stündlich zusammen mit der Statusabfrage die Tageswerte der letzten 30 Tage aus der Cloud. Das weckt das Auto nicht. Die Werte gibt es nur bei Fahrzeugen, die sie liefern (Elektro und Plug-in-Hybrid).
@@ -150,3 +163,4 @@ Jeder abgeschlossene Tag wird einmal in die Zähler gebucht. Beim Einschalten tr
 | `BL_ChargeStop($id)` | Laden stoppen |
 | `BL_SetChargeTargets($id, $limitAC, $limitDC)` | Ladelimits setzen (50–100%) |
 | `BL_UpdateDrivingStats($id)` | Fahrstatistik sofort abrufen |
+| `BL_UpdateTrips($id)` | Fahrtenbuch sofort abrufen |

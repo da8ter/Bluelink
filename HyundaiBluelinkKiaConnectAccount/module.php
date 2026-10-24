@@ -79,6 +79,9 @@ class HyundaiBluelinkKiaConnectAccount extends IPSModule
             case 'GetDrivingHistory':
                 return $this->GetDrivingHistoryJSON($data['VehicleId'] ?? '');
 
+            case 'GetTripInfo':
+                return $this->GetTripInfoJSON($data['VehicleId'] ?? '', (int) ($data['PeriodType'] ?? 0), (string) ($data['Date'] ?? ''));
+
             case 'Lock':
                 return $this->ExecuteCommandJSON($data['VehicleId'] ?? '', 'Lock');
 
@@ -279,6 +282,24 @@ class HyundaiBluelinkKiaConnectAccount extends IPSModule
             return json_encode(['success' => true, 'days' => $history['drivingInfoDetail'] ?? []]);
         } catch (Exception $e) {
             $this->SendDebug('GetDrivingHistory', 'Error: ' . $e->getMessage(), 0);
+            return json_encode(['success' => false, 'error' => $e->getMessage()]);
+        } finally {
+            if ($services) { $this->persistAuthCache($services['auth']); }
+        }
+    }
+
+    private function GetTripInfoJSON(string $vehicleId, int $periodType, string $date): string
+    {
+        $services = null;
+        try {
+            if (!preg_match($periodType === 0 ? '/^\d{6}$/' : '/^\d{8}$/', $date)) {
+                throw new Exception('Invalid date: ' . $date);
+            }
+            $services = $this->createApiClientWithAuth();
+            $info = $services['client']->getTripInfo($vehicleId, $periodType, $date);
+            return json_encode(['success' => true, 'info' => $info]);
+        } catch (Exception $e) {
+            $this->SendDebug('GetTripInfo', 'Error: ' . $e->getMessage(), 0);
             return json_encode(['success' => false, 'error' => $e->getMessage()]);
         } finally {
             if ($services) { $this->persistAuthCache($services['auth']); }
