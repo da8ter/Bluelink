@@ -175,7 +175,8 @@
             "Cloud queried %s": "Cloud abgefragt: %s",
             "last on": "zuletzt an",
             "Last report from the car: %s. Climate and charging may have changed since then.": "Letzte Meldung des Autos: %s. Klima und Laden können sich seitdem geändert haben.",
-            "last reported": "zuletzt gemeldet"
+            "last reported": "zuletzt gemeldet",
+            "Keep trip log (days, 0 = unlimited)": "Fahrtenbuch aufbewahren (Tage, 0 = unbegrenzt)"
         },
         "en": {
             "Vehicle": "Vehicle",
@@ -352,7 +353,8 @@
             "Cloud queried %s": "Cloud queried %s",
             "last on": "last on",
             "Last report from the car: %s. Climate and charging may have changed since then.": "Last report from the car: %s. Climate and charging may have changed since then.",
-            "last reported": "last reported"
+            "last reported": "last reported",
+            "Keep trip log (days, 0 = unlimited)": "Keep trip log (days, 0 = unlimited)"
         }
     }
 }

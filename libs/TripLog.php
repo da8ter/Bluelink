@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 /**
  * Trip log from /tripinfo: the month list tells how many trips each day had, day details are
- * fetched only for days whose count changed. Kept for KEEP_DAYS days.
+ * fetched only for days whose count changed (within the last FETCH_DAYS days). How long the log
+ * is kept is configurable (0 = unlimited); the tile only gets the last FETCH_DAYS days.
  */
 class TripLog
 {
-    public const KEEP_DAYS = 31;
+    public const FETCH_DAYS = 31;
     public const MAX_DAY_CALLS = 15;
 
     /** Month answer (tripPeriodType 0) → ['Y-m-d' => trip count]. */
@@ -24,10 +25,13 @@ class TripLog
         return $counts;
     }
 
-    /** Days within the window whose trip count differs from the log, newest first. */
-    public static function due(array $log, array $counts, string $today): array
+    /**
+     * Days within the fetch window whose trip count differs from the log, newest first. A shorter
+     * retention narrows the window, otherwise pruned days would be fetched again every time.
+     */
+    public static function due(array $log, array $counts, string $today, int $keepDays = 0): array
     {
-        $from = date('Y-m-d', strtotime($today . ' -' . (self::KEEP_DAYS - 1) . ' days'));
+        $from = self::from($today, $keepDays > 0 ? min(self::FETCH_DAYS, $keepDays) : self::FETCH_DAYS);
         $due = [];
         foreach ($counts as $date => $count) {
             if ($date >= $from && $date <= $today && $count > 0 && (int) ($log[$date]['count'] ?? -1) !== $count) {
@@ -69,11 +73,27 @@ class TripLog
         ];
     }
 
-    public static function prune(array $log, string $today): array
+    /** Keep $keepDays days (0 = unlimited), newest first. */
+    public static function prune(array $log, string $today, int $keepDays): array
     {
-        $from = date('Y-m-d', strtotime($today . ' -' . (self::KEEP_DAYS - 1) . ' days'));
-        $log = array_filter($log, static fn (string $date): bool => $date >= $from, ARRAY_FILTER_USE_KEY);
+        if ($keepDays > 0) {
+            $log = self::window($log, $today, $keepDays);
+        }
         krsort($log);
         return $log;
+    }
+
+    /** The last $days days of the log, newest first. */
+    public static function window(array $log, string $today, int $days = self::FETCH_DAYS): array
+    {
+        $from = self::from($today, $days);
+        $log = array_filter($log, static fn ($date): bool => (string) $date >= $from, ARRAY_FILTER_USE_KEY);
+        krsort($log);
+        return $log;
+    }
+
+    private static function from(string $today, int $days): string
+    {
+        return date('Y-m-d', (int) strtotime($today . ' -' . (max(1, $days) - 1) . ' days'));
     }
 }

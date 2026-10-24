@@ -70,6 +70,13 @@
                     "caption": "Show dashboard tile (instead of the variable list)"
                 },
                 {
+                    "type": "NumberSpinner",
+                    "name": "TripLogDays",
+                    "caption": "Keep trip log (days, 0 = unlimited)",
+                    "minimum": 0,
+                    "maximum": 36500
+                },
+                {
                     "type": "Label",
                     "caption": "Shows charge or fuel level, remote actions, vehicle status, trip log and statistics in the tile visualization. Adapts to electric cars, plug-in hybrids and combustion cars. Trip log and daily values are fetched hourly from the cloud (does not wake the car)."
                 }

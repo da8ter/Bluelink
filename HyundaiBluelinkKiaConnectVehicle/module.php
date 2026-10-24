@@ -38,14 +38,14 @@ class HyundaiBluelinkKiaConnectVehicle extends IPSModule
         $this->RegisterPropertyInteger('DebugLevel', 0);
         $this->RegisterPropertyBoolean('DrivingStats', false);
         $this->RegisterPropertyBoolean('Tile', true);
+        $this->RegisterPropertyInteger('TripLogDays', 0);
 
         // Days already booked into the driving statistics counters
         $this->RegisterAttributeString('DrivingStatsBooked', '{}');
         $this->RegisterAttributeInteger('DrivingStatsLastWrite', 0);
 
-        // Tile: daily statistics of the last days, trip log, model and drive type
+        // Tile: daily statistics of the last days, model and drive type (trip log: media object)
         $this->RegisterAttributeString('DrivingDays', '{}');
-        $this->RegisterAttributeString('TripLog', '{}');
         $this->RegisterAttributeString('VehicleInfo', '{}');
 
         // Buffers

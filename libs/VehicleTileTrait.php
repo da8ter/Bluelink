@@ -136,8 +136,9 @@ trait VehicleTileTrait
             $counts += TripLog::monthCounts($result['info'] ?? []);
         }
 
-        $log = json_decode($this->ReadAttributeString('TripLog'), true) ?: [];
-        $due = TripLog::due($log, $counts, $today);
+        $keepDays = max(0, $this->ReadPropertyInteger('TripLogDays'));
+        $log = $this->readTripLog();
+        $due = TripLog::due($log, $counts, $today, $keepDays);
         foreach ($due as $date) {
             $result = $this->SendToParent('GetTripInfo', ['VehicleId' => $vehicleId, 'PeriodType' => 1, 'Date' => str_replace('-', '', $date)]);
             if (!($result['success'] ?? false)) {
@@ -150,8 +151,49 @@ trait VehicleTileTrait
             }
         }
         $this->SendDebug('Trips', sprintf('%d days with trips, %d fetched', count($counts), count($due)), 0);
-        $this->WriteAttributeString('TripLog', json_encode(TripLog::prune($log, $today)));
+        $this->writeTripLog(TripLog::prune($log, $today, $keepDays));
         $this->tileChanged();
+    }
+
+    /** Whole trip log as JSON (date => day with trips), newest first. */
+    public function GetTripLog(): string
+    {
+        return (string) json_encode((object) $this->readTripLog());
+    }
+
+    /**
+     * The trip log lives in a hidden document media object below the instance, not in an
+     * attribute: unlimited retention would otherwise grow settings.json with every change.
+     */
+    private function tripLogMedia(bool $create): int
+    {
+        $id = @IPS_GetObjectIDByIdent('TripLogData', $this->InstanceID);
+        if ($id !== false) {
+            return (int) $id;
+        }
+        if (!$create) {
+            return 0;
+        }
+        $id = IPS_CreateMedia(MEDIATYPE_DOCUMENT);
+        IPS_SetParent($id, $this->InstanceID);
+        IPS_SetIdent($id, 'TripLogData');
+        IPS_SetName($id, $this->Translate('Trip log'));
+        IPS_SetHidden($id, true);
+        // File first, then content; otherwise Symcon does not take the content
+        IPS_SetMediaFile($id, 'media/bluelink_trips_' . $this->InstanceID . '.json', false);
+        IPS_SetMediaContent($id, base64_encode('{}'));
+        return $id;
+    }
+
+    private function readTripLog(): array
+    {
+        $id = $this->tripLogMedia(false);
+        return $id === 0 ? [] : (json_decode((string) base64_decode(IPS_GetMediaContent($id)), true) ?: []);
+    }
+
+    private function writeTripLog(array $log): void
+    {
+        IPS_SetMediaContent($this->tripLogMedia(true), base64_encode((string) json_encode((object) $log)));
     }
 
     /** Model, year and drive type (EV, PHEV, HEV, …) from the vehicle list of the account. */
@@ -224,7 +266,8 @@ trait VehicleTileTrait
             'pos'       => ($lat != 0.0 || $lon != 0.0)
                 ? ['lat' => $lat, 'lon' => $lon, 'ts' => $timestamp((string) $value('PositionTimestamp', ''), 'YmdHis')] : null,
             'days'      => (object) (json_decode($this->ReadAttributeString('DrivingDays'), true) ?: []),
-            'trips'     => (object) (json_decode($this->ReadAttributeString('TripLog'), true) ?: []),
+            // Only the last days; the whole log can be large (unlimited retention)
+            'trips'     => (object) TripLog::window($this->readTripLog(), date('Y-m-d')),
         ];
     }
 }
