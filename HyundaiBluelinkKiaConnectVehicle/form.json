@@ -70,6 +70,39 @@
                     "caption": "Show dashboard tile (instead of the variable list)"
                 },
                 {
+                    "type": "List",
+                    "name": "VehicleRows",
+                    "caption": "Card \"Vehicle\" in the tile (order by drag and drop)",
+                    "rowCount": 10,
+                    "add": false,
+                    "delete": false,
+                    "changeOrder": true,
+                    "loadValuesFromConfiguration": false,
+                    "columns": [
+                        {
+                            "caption": "Show",
+                            "name": "Visible",
+                            "width": "90px",
+                            "edit": {
+                                "type": "CheckBox"
+                            }
+                        },
+                        {
+                            "caption": "Value",
+                            "name": "Label",
+                            "width": "auto"
+                        },
+                        {
+                            "caption": "Key",
+                            "name": "Key",
+                            "width": "120px",
+                            "visible": false,
+                            "save": true
+                        }
+                    ],
+                    "values": []
+                },
+                {
                     "type": "NumberSpinner",
                     "name": "TripLogDays",
                     "caption": "Keep trip log (days, 0 = unlimited)",

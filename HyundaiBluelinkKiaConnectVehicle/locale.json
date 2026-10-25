@@ -136,7 +136,6 @@
             "Doors": "Türen",
             "All closed": "Alle geschlossen",
             "Windows": "Fenster",
-            "Steering wheel heating": "Lenkradheizung",
             "12V battery": "12-V-Batterie",
             "Position": "Standort",
             "Open map": "Karte öffnen",
@@ -186,7 +185,11 @@
             "kWh consumption": "kWh Verbrauch",
             "km per driving day": "km je Fahrtag",
             "km/h average speed": "km/h im Schnitt",
-            "%s of the drive energy recovered": "%s der Antriebsenergie zurückgewonnen"
+            "%s of the drive energy recovered": "%s der Antriebsenergie zurückgewonnen",
+            "Card \"Vehicle\" in the tile (order by drag and drop)": "Karte „Fahrzeug“ in der Kachel (Reihenfolge per Drag & Drop)",
+            "Show": "Anzeigen",
+            "Value": "Wert",
+            "Key": "Schlüssel"
         },
         "en": {
             "Vehicle": "Vehicle",
@@ -324,7 +327,6 @@
             "Doors": "Doors",
             "All closed": "All closed",
             "Windows": "Windows",
-            "Steering wheel heating": "Steering wheel heating",
             "12V battery": "12V battery",
             "Position": "Position",
             "Open map": "Open map",
@@ -374,7 +376,11 @@
             "kWh consumption": "kWh consumption",
             "km per driving day": "km per driving day",
             "km/h average speed": "km/h average speed",
-            "%s of the drive energy recovered": "%s of the drive energy recovered"
+            "%s of the drive energy recovered": "%s of the drive energy recovered",
+            "Card \"Vehicle\" in the tile (order by drag and drop)": "Card \"Vehicle\" in the tile (order by drag and drop)",
+            "Show": "Show",
+            "Value": "Value",
+            "Key": "Key"
         }
     }
 }

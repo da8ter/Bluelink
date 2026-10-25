@@ -39,6 +39,7 @@ class HyundaiBluelinkKiaConnectVehicle extends IPSModule
         $this->RegisterPropertyBoolean('DrivingStats', false);
         $this->RegisterPropertyBoolean('Tile', true);
         $this->RegisterPropertyInteger('TripLogDays', 0);
+        $this->RegisterPropertyString('VehicleRows', self::defaultVehicleRows());
 
         // Days already booked into the driving statistics counters
         $this->RegisterAttributeString('DrivingStatsBooked', '{}');

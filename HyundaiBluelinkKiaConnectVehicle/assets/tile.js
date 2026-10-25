@@ -182,20 +182,48 @@
 
   function openList(names) { return names.filter(n => n[1]).map(n => n[0]); }
 
+  // Zeilen der Karte „Fahrzeug“: Reihenfolge und Auswahl kommen aus dem Formular (state.rows).
+  // Jede Zeile liefert [Symbol, Beschriftung, Wert, Warnung] oder null, wenn das Auto den Wert nicht hat.
+  const DEFAULT_ROWS = ['doors', 'windows', 'trunk', 'hood', 'battery12v', 'odometer'];
+  const onOff = v => (v ? T('On') : T('Off'));
+  const ROWS = {
+    doors: s => { const o = openList([[T('Driver'), s.doors[0]], [T('Passenger'), s.doors[1]], [T('Rear left'), s.doors[2]], [T('Rear right'), s.doors[3]]]);
+      return ['door', T('Doors'), o.length ? T('Open') + ': ' + o.join(', ') : T('All closed'), o.length > 0]; },
+    windows: s => { const o = openList([[T('Driver'), s.windows[0]], [T('Passenger'), s.windows[1]], [T('Rear left'), s.windows[2]], [T('Rear right'), s.windows[3]]]);
+      return ['window', T('Windows'), o.length ? T('Open') + ': ' + o.join(', ') : T('All closed'), o.length > 0]; },
+    trunk: s => ['trunk', T('Trunk'), s.trunk ? T('Open') : T('Closed'), s.trunk],
+    hood: s => ['hood', T('Hood'), s.hood ? T('Open') : T('Closed'), s.hood],
+    locked: s => [s.locked ? 'lock' : 'lockOpen', T('Doors Locked'), s.locked ? T('Locked') : T('Unlocked'), !s.locked],
+    battery12v: s => (s.battery12v > 0 ? ['battery12v', T('12V battery'), num(s.battery12v) + ' %', s.battery12v < 50] : null),
+    odometer: s => (s.odometer > 0 ? ['odometer', T('Odometer'), num(s.odometer) + ' km', false] : null),
+    soc: s => (s.caps.ev ? ['battery', T('Battery SOC'), num(s.soc) + ' %', s.soc < 20] : null),
+    range: s => (s.range > 0 ? ['route', T('Range'), num(s.range) + ' km', false] : null),
+    plugged: s => (s.caps.ev ? ['plug', T('Plugged In'), s.plugged ? T('Plugged in') : T('Not plugged in'), false] : null),
+    charging: s => (s.caps.ev ? ['bolt', T('Charging State'), s.charging === 2 ? T('Charging now') : s.charging === 1 ? T('Plugged in') : T('Not plugged in'), false] : null),
+    power: s => (s.caps.ev ? ['bolt', T('Charging Power'), num(s.power, 1) + ' kW', false] : null),
+    remaining: s => (s.caps.ev ? ['clock', T('Remaining Charge Time'), s.remaining > 0 ? dur(s.remaining) : '–', false] : null),
+    limitAC: s => (s.caps.ev && s.limitAC > 0 ? ['battery', T('Charge Limit AC'), num(s.limitAC) + ' %', false] : null),
+    limitDC: s => (s.caps.ev && s.limitDC > 0 ? ['battery', T('Charge Limit DC'), num(s.limitDC) + ' %', false] : null),
+    fuel: s => (s.caps.fuel ? ['fuel', T('Fuel Level'), num(s.fuel) + ' %', s.fuel < 15] : null),
+    climate: s => ['climate', T('Climate'), onOff(s.climate), false],
+    target: s => ['climate', T('Target Temperature'), num(s.target, 1) + ' °C', false],
+    defrost: s => ['defrost', T('Defrost'), onOff(s.defrost), false],
+    steering: s => ['steering', T('Steering Wheel Heating'), onOff(s.steering), false],
+    position: s => (s.pos ? ['position', T('Position'), num(s.pos.lat, 5) + ', ' + num(s.pos.lon, 5), false] : null),
+    carTime: s => (s.carTime > 0 ? ['clock', T('Vehicle Data From'), ago(s.carTime), stale(s)] : null),
+    updated: s => ['clock', T('Last Update'), ago(s.updated), false],
+    online: s => [s.online ? 'online' : 'offline', T('API Online'), s.online ? T('Online') : T('Offline'), !s.online],
+    lastCommand: s => ['clock', T('Last Command'), ago(s.lastCommand), false],
+    error: s => ['warning', T('Last Error'), s.error || '–', !!s.error],
+    cloudCount: s => ['refresh', T('Cloud Refresh Counter'), num(s.cloudCount), false],
+    vehicleCount: s => ['wake', T('Vehicle Refresh Counter'), num(s.vehicleCount), false],
+  };
+
   function vehicle(s) {
-    const doors = openList([[T('Driver'), s.doors[0]], [T('Passenger'), s.doors[1]], [T('Rear left'), s.doors[2]], [T('Rear right'), s.doors[3]]]);
-    const windows = openList([[T('Driver'), s.windows[0]], [T('Passenger'), s.windows[1]], [T('Rear left'), s.windows[2]], [T('Rear right'), s.windows[3]]]);
-    const row = (icon, label, value, warn) => '<div class="row' + (warn ? ' warn' : '') + '">' + I(icon) + '<span>' + esc(label) + '</span><b>' + esc(value) + '</b></div>';
-    let html = row('door', T('Doors'), doors.length ? T('Open') + ': ' + doors.join(', ') : T('All closed'), doors.length > 0)
-      + row('window', T('Windows'), windows.length ? T('Open') + ': ' + windows.join(', ') : T('All closed'), windows.length > 0)
-      + row('trunk', T('Trunk'), s.trunk ? T('Open') : T('Closed'), s.trunk)
-      + row('hood', T('Hood'), s.hood ? T('Open') : T('Closed'), s.hood);
-    if (s.climate && (s.defrost || s.steering)) {
-      html += row('defrost', T('Climate'), openList([[T('Defrost'), s.defrost], [T('Steering wheel heating'), s.steering]]).join(', '), false);
-    }
-    if (s.battery12v > 0) html += row('battery12v', T('12V battery'), num(s.battery12v) + ' %', s.battery12v < 50);
-    if (s.odometer > 0) html += row('odometer', T('Odometer'), num(s.odometer) + ' km', false);
-    return '<section class="card list"><h3>' + esc(T('Vehicle')) + '</h3>' + html + '</section>';
+    const keys = Array.isArray(s.rows) ? s.rows : DEFAULT_ROWS;
+    const html = keys.map(k => (ROWS[k] ? ROWS[k](s) : null)).filter(Boolean)
+      .map(([icon, label, value, warn]) => '<div class="row' + (warn ? ' warn' : '') + '">' + I(icon) + '<span>' + esc(label) + '</span><b>' + esc(value) + '</b></div>').join('');
+    return html ? '<section class="card list"><h3>' + esc(T('Vehicle')) + '</h3>' + html + '</section>' : '';
   }
 
   function position(s) {

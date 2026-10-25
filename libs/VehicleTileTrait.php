@@ -12,6 +12,74 @@ trait VehicleTileTrait
 {
     private const TILE_PUSH_MS = 300;
 
+    /**
+     * Values the card "Vehicle" of the tile can show: key => [label (variable caption), shown by
+     * default]. Order and visibility are configured in the form (property VehicleRows); keys added
+     * in later versions are appended with their default.
+     */
+    private const VEHICLE_ROWS = [
+        'doors' => ['Doors', true], 'windows' => ['Windows', true], 'trunk' => ['Trunk', true], 'hood' => ['Hood', true],
+        'locked' => ['Doors Locked', false], 'battery12v' => ['12V battery', true], 'odometer' => ['Odometer', true],
+        'soc' => ['Battery SOC', false], 'range' => ['Range', false], 'plugged' => ['Plugged In', false],
+        'charging' => ['Charging State', false], 'power' => ['Charging Power', false], 'remaining' => ['Remaining Charge Time', false],
+        'limitAC' => ['Charge Limit AC', false], 'limitDC' => ['Charge Limit DC', false], 'fuel' => ['Fuel Level', false],
+        'climate' => ['Climate', false], 'target' => ['Target Temperature', false], 'defrost' => ['Defrost', false],
+        'steering' => ['Steering Wheel Heating', false], 'position' => ['Position', false], 'carTime' => ['Vehicle Data From', false],
+        'updated' => ['Last Update', false], 'online' => ['API Online', false], 'lastCommand' => ['Last Command', false],
+        'error' => ['Last Error', false], 'cloudCount' => ['Cloud Refresh Counter', false], 'vehicleCount' => ['Vehicle Refresh Counter', false],
+    ];
+
+    /** Default of the property VehicleRows. */
+    private static function defaultVehicleRows(): string
+    {
+        $rows = [];
+        foreach (self::VEHICLE_ROWS as $key => [, $visible]) {
+            $rows[] = ['Key' => $key, 'Visible' => $visible];
+        }
+        return (string) json_encode($rows);
+    }
+
+    /** Configured rows in their order (key => visible), unknown keys dropped, new keys appended. */
+    private function vehicleRows(): array
+    {
+        $rows = [];
+        foreach (json_decode($this->ReadPropertyString('VehicleRows'), true) ?: [] as $row) {
+            $key = (string) ($row['Key'] ?? '');
+            if (isset(self::VEHICLE_ROWS[$key]) && !isset($rows[$key])) {
+                $rows[$key] = (bool) ($row['Visible'] ?? false);
+            }
+        }
+        foreach (self::VEHICLE_ROWS as $key => [, $visible]) {
+            $rows[$key] ??= $visible;
+        }
+        return $rows;
+    }
+
+    /**
+     * The list VehicleRows is filled here (loadValuesFromConfiguration false): translated labels,
+     * saved order and keys of newer versions. Only Key and Visible are saved.
+     */
+    public function GetConfigurationForm(): string
+    {
+        $form = json_decode((string) file_get_contents(__DIR__ . '/../HyundaiBluelinkKiaConnectVehicle/form.json'), true);
+        $values = [];
+        foreach ($this->vehicleRows() as $key => $visible) {
+            $values[] = ['Key' => $key, 'Label' => $this->Translate(self::VEHICLE_ROWS[$key][0]), 'Visible' => $visible];
+        }
+        $fill = static function (array &$elements) use (&$fill, $values): void {
+            foreach ($elements as &$element) {
+                if (($element['name'] ?? '') === 'VehicleRows') {
+                    $element['values'] = $values;
+                }
+                if (isset($element['items']) && is_array($element['items'])) {
+                    $fill($element['items']);
+                }
+            }
+        };
+        $fill($form['elements']);
+        return (string) json_encode($form);
+    }
+
     /** Tile texts (English; translated through locale.json). */
     private const TILE_TEXTS = [
         'Never', 'just now', '%d min ago', '%d h ago', '%d h', '%d min', 'Today', 'Yesterday', 'Charging now', '%s left',
@@ -19,13 +87,14 @@ trait VehicleTileTrait
         'Locked', 'Unlocked', 'Lock', 'Climate', 'On', 'Off', 'Stop charging', 'Start charging',
         'Remote actions need the PIN in the account settings', 'Command running…', 'Driver', 'Passenger',
         'Rear left', 'Rear right', 'Doors', 'Open', 'All closed', 'Windows', 'Trunk', 'Closed', 'Hood', 'Defrost',
-        'Steering wheel heating', '12V battery', 'Odometer', 'Vehicle', 'Position', 'Open map', 'Last trip',
+        '12V battery', 'Odometer', 'Vehicle', 'Position', 'Open map', 'Last trip',
         'Trip log', 'kWh/100 km', 'No trips yet', 'Trips', 'Distance', 'Last 30 days', '%d trip',
         '%d trips', '%s idle', 'No data yet', 'Consumption', 'Regeneration', 'Updated %s',
         'Online', 'Offline', 'Refresh', 'Tap again to wake the vehicle', 'Wake vehicle (drains the 12V battery)',
         'Overview', 'Statistics', 'Drive', 'Electronics', 'Battery care', 'Close', 'Vehicle data: %s', 'Cloud queried %s', 'last on',
         'Last report from the car: %s. Climate and charging may have changed since then.', 'last reported', 'Older trips', 'Loading…', 'km distance', 'h driving time', 'kWh consumption',
         'km per driving day', 'km/h average speed', '%s of the drive energy recovered',
+        'API Online', 'Battery SOC', 'Charge Limit AC', 'Charge Limit DC', 'Charging Power', 'Charging State', 'Cloud Refresh Counter', 'Doors Locked', 'Fuel Level', 'Last Command', 'Last Error', 'Last Update', 'Plugged In', 'Range', 'Remaining Charge Time', 'Steering Wheel Heating', 'Target Temperature', 'Vehicle Data From', 'Vehicle Refresh Counter',
     ];
 
     private function tileEnabled(): bool
@@ -351,6 +420,10 @@ trait VehicleTileTrait
             'days'      => (object) (json_decode($this->ReadAttributeString('DrivingDays'), true) ?: []),
             // Only the last days; the whole log can be large (unlimited retention). Older months on request.
             'trips'     => (object) TripLog::window($log, date('Y-m-d')),
+            'rows'      => array_keys(array_filter($this->vehicleRows())),
+            'lastCommand' => $timestamp((string) $value('LastCommandTimestamp', ''), 'd.m.Y H:i:s'),
+            'cloudCount' => (int) $value('CloudRefreshCounter', 0),
+            'vehicleCount' => (int) $value('VehicleRefreshCounter', 0),
             'tripOldest' => $log === [] ? '' : (string) min(array_map('strval', array_keys($log))),
         ];
     }

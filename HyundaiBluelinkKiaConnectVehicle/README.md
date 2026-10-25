@@ -41,6 +41,7 @@ Funktionen:
 | Charging Poll Interval | integer | 900 | Fahrzeug-Refresh-Intervall während des Ladens in Sekunden (min. 300) |
 | Dashboard Tile | bool | true | Dashboard-Kachel statt der Variablenliste (siehe unten) |
 | Keep Trip Log | integer | 0 | Fahrtenbuch aufbewahren in Tagen, 0 = unbegrenzt |
+| Vehicle Card | list | Türen, Fenster, Kofferraum, Motorhaube, 12-V-Batterie, Kilometerstand | Welche Fahrzeugwerte die Karte „Fahrzeug“ der Kachel zeigt und in welcher Reihenfolge (Häkchen, Drag & Drop) |
 | Driving Statistics | bool | false | Tageswerte der Fahrstatistik abrufen (siehe unten) |
 | Debug Enabled | bool | false | Debug-Ausgabe aktivieren |
 
@@ -122,7 +123,7 @@ Die Fahrzeug-Instanz bringt eine eigene Kachel für die Kachel-Visualisierung mi
 - **Statistik:** Balken der letzten 30 Tage für Strecke, Verbrauch oder kWh/100 km, Aufteilung des Verbrauchs auf Antrieb, Klima, Bordelektronik und Batteriepflege, Rekuperation und Durchschnittswerte.
 - **Kleine Kacheln:** In 1×1 nur der Ring mit Schloss, in 2×1 und 2×2 Ring, Laden und die Knöpfe für Schloss und Klima.
 
-Im Kopf steht, wann sich das Auto zuletzt gemeldet hat. Ist das länger als drei Stunden her, kennzeichnet die Kachel Klima und Laden als „zuletzt gemeldet“. Das Fahrtenbuch bewahrt die Instanz in einem versteckten Medienobjekt „Fahrtenbuch“ auf, standardmäßig unbegrenzt (einstellbar); `BL_GetTripLog($id)` liefert es als JSON. Beim ersten Abruf sucht die Instanz einmalig auch ältere Fahrten in der Cloud (Knopf „Ältere Fahrten aus der Cloud nachladen“ im Formular) und lädt sie nach und nach, höchstens 15 Tage pro Stunde. Die Cloud lieferte bei einem Test Fahrten der letzten gut drei Monate. Fernbefehle brauchen die PIN in der Konto-Instanz. Fahrtenbuch und Tageswerte holt die Instanz stündlich zusammen mit der Statusabfrage aus der Cloud; das weckt das Auto nicht. Der Knopf „Fahrzeug wecken“ erscheint nur, wenn der Fahrzeug-Refresh erlaubt ist, und fragt vorher nach.
+Welche Werte die Karte „Fahrzeug“ zeigt und in welcher Reihenfolge, legt die Liste „Karte „Fahrzeug“ in der Kachel“ im Formular fest (28 Werte zur Auswahl, Reihenfolge per Drag & Drop). Werte, die das Auto nicht liefert, lässt die Kachel weg. Im Kopf steht, wann sich das Auto zuletzt gemeldet hat. Ist das länger als drei Stunden her, kennzeichnet die Kachel Klima und Laden als „zuletzt gemeldet“. Das Fahrtenbuch bewahrt die Instanz in einem versteckten Medienobjekt „Fahrtenbuch“ auf, standardmäßig unbegrenzt (einstellbar); `BL_GetTripLog($id)` liefert es als JSON. Beim ersten Abruf sucht die Instanz einmalig auch ältere Fahrten in der Cloud (Knopf „Ältere Fahrten aus der Cloud nachladen“ im Formular) und lädt sie nach und nach, höchstens 15 Tage pro Stunde. Die Cloud lieferte bei einem Test Fahrten der letzten gut drei Monate. Fernbefehle brauchen die PIN in der Konto-Instanz. Fahrtenbuch und Tageswerte holt die Instanz stündlich zusammen mit der Statusabfrage aus der Cloud; das weckt das Auto nicht. Der Knopf „Fahrzeug wecken“ erscheint nur, wenn der Fahrzeug-Refresh erlaubt ist, und fragt vorher nach.
 
 ### Fahrstatistik (optional)
 
