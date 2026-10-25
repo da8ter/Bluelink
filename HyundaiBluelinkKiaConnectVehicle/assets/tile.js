@@ -205,6 +205,10 @@
       + '<button class="wide-btn" data-act="map">' + I('map') + '<span>' + esc(T('Open map')) + '</span></button></section>';
   }
 
+  // Kachel der Zusammenfassung: Zahl oben, Einheit in der Beschriftung (sonst wird schmal abgeschnitten)
+  const box = (value, label) => '<div><b>' + esc(value) + '</b><span>' + esc(label) + '</span></div>';
+  const hm = min => { min = Math.round(min || 0); return Math.floor(min / 60) + ':' + String(min % 60).padStart(2, '0'); };
+
   const tripDays = s => Object.keys(s.trips || {}).sort().reverse();
   const statDays = s => Object.keys(s.days || {}).sort().reverse();
 
@@ -277,10 +281,7 @@
     if (!openInit) { openDays.add(all[0]); openInit = true; }
     let trips = 0, km = 0, minutes = 0;
     days.forEach(k => { const e = s.trips[k]; trips += e.count; km += e.dist; minutes += e.drive; });
-    let html = '<div class="summary">'
-      + '<div><b>' + num(trips) + '</b><span>' + esc(T('Trips')) + '</span></div>'
-      + '<div><b>' + num(km) + ' km</b><span>' + esc(T('Distance')) + '</span></div>'
-      + '<div><b>' + esc(dur(minutes)) + '</b><span>' + esc(T('Driving time')) + '</span></div></div>'
+    let html = '<div class="summary">' + box(num(trips), T('Trips')) + box(num(km), T('km distance')) + box(hm(minutes), T('h driving time')) + '</div>'
       + '<div class="caption">' + esc(T('Last 30 days')) + '</div>';
     const start = windowStart();
     let month = null;
@@ -347,21 +348,28 @@
         if (day.Distance > 0) drivingDays++;
       });
       html += '<section class="card list"><h3>' + esc(T('Last 30 days')) + '</h3>'
-        + '<div class="summary"><div><b>' + num(sum.Consumption, 1) + ' kWh</b><span>' + esc(T('Consumption')) + '</span></div>'
-        + '<div><b>' + (sum.Distance > 0 ? num(sum.Consumption / sum.Distance * 100, 1) : '–') + '</b><span>' + esc(T('kWh/100 km')) + '</span></div>'
-        + '<div><b>' + (drivingDays ? num(sum.Distance / drivingDays) + ' km' : '–') + '</b><span>' + esc(T('per driving day')) + '</span></div></div>'
+        + '<div class="summary">' + box(num(sum.Consumption, 1), T('kWh consumption'))
+        + box(sum.Distance > 0 ? num(sum.Consumption / sum.Distance * 100, 1) : '–', T('kWh/100 km'))
+        + box(drivingDays ? num(sum.Distance / drivingDays) : '–', T('km per driving day')) + '</div>'
         + breakdown(sum, sum.Consumption)
-        + '<div class="row">' + I('leaf') + '<span>' + esc(T('Regeneration')) + '</span><b>' + esc(num(sum.Regeneration, 1) + ' kWh') + '</b></div></section>';
+        + regeneration(sum) + '</section>';
     } else {
       // Ohne Energiedaten (Verbrenner): Zusammenfassung aus dem Fahrtenbuch
       let km = 0, trips = 0, minutes = 0, drivingDays = 0;
       tripDays(s).forEach(k => { const e = s.trips[k]; km += e.dist; trips += e.count; minutes += e.drive; if (e.dist > 0) drivingDays++; });
       html += '<section class="card list"><h3>' + esc(T('Last 30 days')) + '</h3>'
-        + '<div class="summary"><div><b>' + num(km) + ' km</b><span>' + esc(T('Distance')) + '</span></div>'
-        + '<div><b>' + (drivingDays ? num(km / drivingDays) + ' km' : '–') + '</b><span>' + esc(T('per driving day')) + '</span></div>'
-        + '<div><b>' + (minutes > 0 ? num(km / minutes * 60) + ' km/h' : '–') + '</b><span>' + esc(T('Avg. speed')) + '</span></div></div></section>';
+        + '<div class="summary">' + box(num(km), T('km distance')) + box(drivingDays ? num(km / drivingDays) : '–', T('km per driving day'))
+        + box(minutes > 0 ? num(km / minutes * 60) : '–', T('km/h average speed')) + '</div></section>';
     }
     return html;
+  }
+
+  // „Antrieb“ ist schon nach Abzug der Rekuperation gerechnet; der Anteil bezieht sich deshalb auf
+  // die gesamte Antriebsenergie (Antrieb + Rekuperation), sonst wirkt der Wert zu hoch.
+  function regeneration(sum) {
+    const gross = (sum.Drive || 0) + (sum.Regeneration || 0);
+    const share = gross > 0 ? '<small>' + esc(T('%s of the drive energy recovered', num(sum.Regeneration / gross * 100) + ' %')) + '</small>' : '';
+    return '<div class="row">' + I('leaf') + '<span>' + esc(T('Regeneration')) + share + '</span><b>' + esc(num(sum.Regeneration, 1) + ' kWh') + '</b></div>';
   }
 
   function breakdown(d, total) {

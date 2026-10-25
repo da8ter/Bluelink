@@ -123,6 +123,7 @@ html.wide .ov { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-item
 .list .row b { text-align: right; font-weight: 600; }
 .list .row .fa-icon { width: 16px; height: 16px; color: var(--muted); }
 .list .row.warn b, .list .row.warn .fa-icon { color: var(--orange); }
+.list .row > span small { display: block; font-size: 12px; }
 .wide-btn { margin-top: 8px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
   padding: 10px; border-radius: 12px; font-weight: 700; background: var(--surface2); }
 

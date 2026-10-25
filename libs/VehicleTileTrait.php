@@ -20,11 +20,12 @@ trait VehicleTileTrait
         'Remote actions need the PIN in the account settings', 'Command running…', 'Driver', 'Passenger',
         'Rear left', 'Rear right', 'Doors', 'Open', 'All closed', 'Windows', 'Trunk', 'Closed', 'Hood', 'Defrost',
         'Steering wheel heating', '12V battery', 'Odometer', 'Vehicle', 'Position', 'Open map', 'Last trip',
-        'Trip log', 'kWh/100 km', 'No trips yet', 'Trips', 'Distance', 'Driving time', 'Last 30 days', '%d trip',
-        '%d trips', '%s idle', 'No data yet', 'Consumption', 'per driving day', 'Regeneration', 'Updated %s',
+        'Trip log', 'kWh/100 km', 'No trips yet', 'Trips', 'Distance', 'Last 30 days', '%d trip',
+        '%d trips', '%s idle', 'No data yet', 'Consumption', 'Regeneration', 'Updated %s',
         'Online', 'Offline', 'Refresh', 'Tap again to wake the vehicle', 'Wake vehicle (drains the 12V battery)',
-        'Overview', 'Statistics', 'Drive', 'Electronics', 'Battery care', 'Avg. speed', 'Close', 'Vehicle data: %s', 'Cloud queried %s', 'last on',
-        'Last report from the car: %s. Climate and charging may have changed since then.', 'last reported', 'Older trips', 'Loading…',
+        'Overview', 'Statistics', 'Drive', 'Electronics', 'Battery care', 'Close', 'Vehicle data: %s', 'Cloud queried %s', 'last on',
+        'Last report from the car: %s. Climate and charging may have changed since then.', 'last reported', 'Older trips', 'Loading…', 'km distance', 'h driving time', 'kWh consumption',
+        'km per driving day', 'km/h average speed', '%s of the drive energy recovered',
     ];
 
     private function tileEnabled(): bool
