@@ -199,3 +199,11 @@ html.mini .ring-text span { font-size: 11px; }
 .mini-lock.ok { color: var(--green); }
 .mini-lock.warn { color: var(--orange); }
 .mini-lock .fa-icon, .mini-charge .fa-icon { width: 18px; height: 18px; }
+
+/* Kleine Standortkarte */
+.minimap { position: relative; height: 150px; margin: 4px 0 6px; border-radius: 10px; overflow: hidden; cursor: pointer; background: #dfe3e8; }
+.minimap .tiles { position: absolute; left: 0; top: 0; width: 768px; height: 768px; }
+.minimap .tiles img { position: absolute; width: 256px; height: 256px; user-select: none; pointer-events: none; }
+.minimap .pin { position: absolute; left: 50%; top: 75px; transform: translate(-50%, -100%); color: #e5484d; filter: drop-shadow(0 1px 2px #0006); }
+.minimap .pin .fa-icon { width: 26px; height: 26px; }
+.minimap .attr { position: absolute; right: 4px; bottom: 2px; font-size: 9px; color: #333; background: #fffc; padding: 0 3px; border-radius: 3px; }

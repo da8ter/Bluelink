@@ -227,9 +227,31 @@
     return html ? '<section class="card list"><h3>' + esc(T('Vehicle')) + '</h3>' + html + '</section>' : '';
   }
 
+  // Kleine Karte aus OpenStreetMap-Kacheln (Bilder statt iframe: bleiben beim Neuzeichnen im Browser-Cache).
+  // 3 × 3 Kacheln um den Standort, die Mitte liegt genau auf dem Fahrzeug; ein Tipp öffnet die große Karte.
+  function miniMap(pos) {
+    const lat = Number(pos.lat), lon = Number(pos.lon), z = 16, n = 2 ** z;
+    if (!isFinite(lat) || !isFinite(lon) || Math.abs(lat) > 85) return '';
+    const x = (lon + 180) / 360 * n;
+    const y = (1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * n;
+    const tx = Math.floor(x), ty = Math.floor(y);
+    let tiles = '';
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        tiles += '<img alt="" draggable="false" style="left:' + ((dx + 1) * 256) + 'px;top:' + ((dy + 1) * 256) + 'px" src="https://tile.openstreetmap.org/'
+          + z + '/' + (((tx + dx) % n) + n) % n + '/' + (ty + dy) + '.png">';
+      }
+    }
+    // Versatz so, dass der Punkt (x, y) in der Mitte des Rahmens liegt
+    const ox = Math.round((x - tx + 1) * 256), oy = Math.round((y - ty + 1) * 256);
+    return '<div class="minimap" data-act="map" role="button" title="' + esc(T('Open map')) + '">'
+      + '<div class="tiles" style="left:calc(50% - ' + ox + 'px);top:' + (75 - oy) + 'px">' + tiles + '</div>'
+      + '<div class="pin">' + I('position') + '</div><div class="attr">© OpenStreetMap</div></div>';
+  }
+
   function position(s) {
     if (!s.pos) return '';
-    return '<section class="card list"><h3>' + esc(T('Position')) + '</h3>'
+    return '<section class="card list"><h3>' + esc(T('Position')) + '</h3>' + miniMap(s.pos)
       + '<div class="row">' + I('position') + '<span>' + esc(num(s.pos.lat, 5) + ', ' + num(s.pos.lon, 5)) + '</span><b>' + esc(ago(s.pos.ts)) + '</b></div>'
       + '<button class="wide-btn" data-act="map">' + I('map') + '<span>' + esc(T('Open map')) + '</span></button></section>';
   }
