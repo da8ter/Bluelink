@@ -181,7 +181,8 @@ class VehicleStatusMapper
 
             // Climate
             'ClimateOn'    => $climateOn,
-            'TargetTempC'  => ($airTemp !== null && $airTemp !== 'OFF') ? (float) $airTemp : null,
+            // CCS2 also reports the set temperature while the climate is off; like the older status only when on
+            'TargetTempC'  => ($climateOn && is_numeric($airTemp)) ? (float) $airTemp : null,
             'Defrost'      => $defrost,
             'SteeringHeat' => ($steerHeat === 1),
 

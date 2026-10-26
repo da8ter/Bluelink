@@ -68,7 +68,7 @@ class HyundaiBluelinkKiaConnectAccount extends IPSModule
                 return json_encode(['success' => true, 'hasPIN' => !empty($this->ReadPropertyString('PIN'))]);
 
             case 'GetVehicleStatus':
-                return $this->GetVehicleStatusJSON($data['VehicleId'] ?? '');
+                return $this->GetVehicleStatusJSON($data['VehicleId'] ?? '', (bool) ($data['ForceCCS2'] ?? false));
 
             case 'GetVehicleLocation':
                 return $this->GetVehicleLocationJSON($data['VehicleId'] ?? '', (bool) ($data['Force'] ?? false));
@@ -112,7 +112,7 @@ class HyundaiBluelinkKiaConnectAccount extends IPSModule
                 );
 
             case 'RefreshVehicleStatus':
-                return $this->ExecuteCommandJSON($data['VehicleId'] ?? '', 'RefreshVehicleStatus');
+                return $this->ExecuteCommandJSON($data['VehicleId'] ?? '', 'RefreshVehicleStatus', (bool) ($data['ForceCCS2'] ?? false));
 
             case 'GetCommandStatus':
                 return $this->GetCommandStatusJSON($data['VehicleId'] ?? '');
@@ -214,12 +214,12 @@ class HyundaiBluelinkKiaConnectAccount extends IPSModule
         return $this->LoadVehicles();
     }
 
-    private function GetVehicleStatusJSON(string $vehicleId): string
+    private function GetVehicleStatusJSON(string $vehicleId, bool $forceCCS2 = false): string
     {
         $services = null;
         try {
             $services = $this->createApiClientWithAuth();
-            $ccs2 = $this->getVehicleCCS2Support($vehicleId);
+            $ccs2 = $this->getVehicleCCS2Support($vehicleId, $forceCCS2);
             $services['client']->setCCS2Support($ccs2);
             $this->SendDebug('GetVehicleStatus', 'VehicleId=' . $vehicleId . ' CCS2Support=' . $ccs2, 0);
 
@@ -323,7 +323,7 @@ class HyundaiBluelinkKiaConnectAccount extends IPSModule
         }
     }
 
-    private function ExecuteCommandJSON(string $vehicleId, string $commandType): string
+    private function ExecuteCommandJSON(string $vehicleId, string $commandType, bool $forceCCS2 = false): string
     {
         $services = null;
         try {
@@ -347,7 +347,7 @@ class HyundaiBluelinkKiaConnectAccount extends IPSModule
                     $result = $client->stopCharge($vehicleId);
                     break;
                 case 'RefreshVehicleStatus':
-                    $client->setCCS2Support($this->getVehicleCCS2Support($vehicleId));
+                    $client->setCCS2Support($this->getVehicleCCS2Support($vehicleId, $forceCCS2));
                     $result = $client->refreshVehicleStatus($vehicleId);
                     break;
                 default:
@@ -481,8 +481,12 @@ class HyundaiBluelinkKiaConnectAccount extends IPSModule
         $this->SendDebug('TokenCache', 'Persisted (' . strlen($tokenCache) . ' bytes)', 0);
     }
 
-    private function getVehicleCCS2Support(string $vehicleId): int
+    /** CCS2 level from the vehicle list; $force uses CCS2 for cars the list does not mark (option of the vehicle). */
+    private function getVehicleCCS2Support(string $vehicleId, bool $force = false): int
     {
+        if ($force) {
+            return max(1, $this->getVehicleCCS2Support($vehicleId));
+        }
         $cached = $this->GetBuffer('VehicleList');
         if (!empty($cached)) {
             $vehicles = json_decode($cached, true);

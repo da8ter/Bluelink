@@ -33,6 +33,7 @@ class HyundaiBluelinkKiaConnectVehicle extends IPSModule
         $this->RegisterPropertyInteger('PollInterval', self::DEFAULT_POLL_INTERVAL);
         $this->RegisterPropertyInteger('ForceRefreshInterval', self::DEFAULT_FORCE_REFRESH_INTERVAL);
         $this->RegisterPropertyBoolean('AllowVehicleRefresh', false);
+        $this->RegisterPropertyBoolean('ForceCCS2', false);
         $this->RegisterPropertyBoolean('RefreshOnAction', false);
         $this->RegisterPropertyBoolean('ChargingPollEnabled', false);
         $this->RegisterPropertyInteger('ChargingPollInterval', self::DEFAULT_CHARGING_POLL_INTERVAL);
@@ -515,7 +516,7 @@ class HyundaiBluelinkKiaConnectVehicle extends IPSModule
         }
 
         $this->ExecuteRemoteCommand('RefreshVehicleStatus', function () use ($vehicleId) {
-            return $this->SendToParent('RefreshVehicleStatus', ['VehicleId' => $vehicleId]);
+            return $this->SendToParent('RefreshVehicleStatus', ['VehicleId' => $vehicleId, 'ForceCCS2' => $this->ReadPropertyBoolean('ForceCCS2')]);
         });
 
         $this->SetBuffer('LastVehicleRefresh', (string) time());
@@ -544,7 +545,7 @@ class HyundaiBluelinkKiaConnectVehicle extends IPSModule
         $this->SendDebug('ForceRefresh', 'Waking vehicle for fresh data', 0);
 
         $this->ExecuteRemoteCommand('RefreshVehicleStatus', function () use ($vehicleId) {
-            return $this->SendToParent('RefreshVehicleStatus', ['VehicleId' => $vehicleId]);
+            return $this->SendToParent('RefreshVehicleStatus', ['VehicleId' => $vehicleId, 'ForceCCS2' => $this->ReadPropertyBoolean('ForceCCS2')]);
         });
 
         $this->SetBuffer('LastVehicleRefresh', (string) time());
@@ -696,7 +697,7 @@ class HyundaiBluelinkKiaConnectVehicle extends IPSModule
 
     private function FetchAndApplyStatus(string $vehicleId): void
     {
-        $result = $this->SendToParent('GetVehicleStatus', ['VehicleId' => $vehicleId]);
+        $result = $this->SendToParent('GetVehicleStatus', ['VehicleId' => $vehicleId, 'ForceCCS2' => $this->ReadPropertyBoolean('ForceCCS2')]);
 
         if (!($result['success'] ?? false)) {
             $this->SetValue('ApiOnline', false);

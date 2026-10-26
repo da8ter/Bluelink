@@ -122,7 +122,7 @@ final class VehicleExtras
             'Departure1' => self::ccs2Departure(self::get($s, 'Green.Reservation.Departure.Schedule1'),
                 self::get($s, 'Green.Reservation.Departure.Schedule1.Climate') ?? self::get($s, 'Green.Reservation.Departure.Climate')),
             'Departure2' => self::ccs2Departure(self::get($s, 'Green.Reservation.Departure.Schedule2'),
-                self::get($s, 'Green.Reservation.Departure.Schedule2.Climate')),
+                self::get($s, 'Green.Reservation.Departure.Schedule2.Climate') ?? self::get($s, 'Green.Reservation.Departure.Climate2')),
             'OffPeak'    => is_array($offPeak) ? ['start' => self::hhmm($offPeak['StartHour'] ?? null, $offPeak['StartMin'] ?? null),
                 'end' => self::hhmm($offPeak['EndHour'] ?? null, $offPeak['EndMin'] ?? null), 'only' => ($offPeak['Mode'] ?? null) === 3] : null,
             'ScheduledCharging' => is_array($offPeak) && isset($offPeak['Mode']) ? in_array((int) $offPeak['Mode'], [2, 3], true) : null,

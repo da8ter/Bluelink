@@ -53,6 +53,8 @@ Neuere Hyundai- und Kia-Fahrzeuge nutzen das **CCS2-Protokoll** (Connected Car S
 - Erweiterte Batterie-Informationen (SOH, Temperatur, Kapazität)
 - Detailliertere Klima- und Sitzheizungsdaten
 
+Manche Fahrzeuge beantworten den CCS2-Endpoint, obwohl die Fahrzeugliste sie nicht als CCS2 kennzeichnet. Für sie gibt es in der Fahrzeug-Instanz die Option **„CCS2-Status verwenden“**. Wie viele zusätzliche Werte dann kommen, hängt vom Modell ab.
+
 > **Hinweis:** Fahrzeuge ohne CCS2-Support verwenden weiterhin den Legacy-Endpoint. Die `ChargingPowerKw`-Variable zeigt dort 0.0 kW, da die Legacy-API diesen Wert nicht liefert.
 
 ## Weitere Fahrzeugwerte

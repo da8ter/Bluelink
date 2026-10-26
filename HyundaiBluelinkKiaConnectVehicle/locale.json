@@ -256,7 +256,8 @@
             "OK": "OK",
             "Warning": "Warnung",
             "only off-peak": "nur Nebenzeit",
-            "recovered": "zurückgewonnen"
+            "recovered": "zurückgewonnen",
+            "Use CCS2 status (more values; for cars the vehicle list does not mark as CCS2)": "CCS2-Status verwenden (mehr Werte; für Fahrzeuge, die die Fahrzeugliste nicht als CCS2 kennzeichnet)"
         },
         "en": {
             "Vehicle": "Vehicle",
