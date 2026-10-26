@@ -32,7 +32,7 @@ class VehicleStatusMapper
 
             // EV & Charging
             'SOC'                    => self::getInt($evStatus, 'batteryStatus', 0),
-            'RangeKm'                => self::extractRange($evStatus),
+            'RangeKm'                => self::extractRange($evStatus, $vehicleStatus),
             'PluggedIn'              => self::getBool($evStatus, 'batteryPlugin'),
             'ChargingState'          => self::getChargingState($evStatus),
             'ChargingPowerKw'        => self::extractChargingPower($evStatus),
@@ -385,11 +385,13 @@ class VehicleStatusMapper
         return 0;
     }
 
-    private static function extractRange(array $evStatus): float
+    private static function extractRange(array $evStatus, array $vehicleStatus = []): float
     {
         $drvDistance = $evStatus['drvDistance'] ?? [];
         if (!is_array($drvDistance) || empty($drvDistance)) {
-            return 0.0;
+            // Combustion cars have no evStatus; their range is vehicleStatus.dte
+            $dte = $vehicleStatus['dte']['value'] ?? null;
+            return is_numeric($dte) ? round((float) $dte, 1) : 0.0;
         }
         // drvDistance is an indexed array, take first entry
         $entry = $drvDistance[0] ?? [];
