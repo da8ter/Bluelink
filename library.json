@@ -3,9 +3,9 @@
     "author": "Stephan Sprick",
     "name": "Hyundai Bluelink / Kia Connect",
     "url": "https://github.com/da8ter/Bluelink",
-    "version": "0.5",
-    "build": 5,
-    "date": 1792792800,
+    "version": "0.6",
+    "build": 6,
+    "date": 1792969200,
     "compatibility": {
         "version": "8.2",
         "date": 0
