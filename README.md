@@ -1,5 +1,7 @@
 # Hyundai Bluelink / Kia Connect – Symcon Anbindung
 
+![Hyundai/Kia Bluelink — Kachel](https://raw.githubusercontent.com/da8ter/images/main/Bluelink%20Vollbild.png)
+
 Hyundai Bluelink & Kia Connect Integration für Symcon 8.2 (9.0) (EU-Region).
 
 Liest Fahrzeugdaten und steuert Remote-Aktionen über die Hyundai Bluelink / Kia Connect API. Unterstützt mehrere Fahrzeuge pro Account und beide Marken gleichzeitig.
