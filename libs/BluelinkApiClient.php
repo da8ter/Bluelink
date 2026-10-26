@@ -106,6 +106,13 @@ class BluelinkApiClient
         return $response['resMsg'] ?? [];
     }
 
+    /** Last parked position from the cloud; does not wake the car (unlike /location). */
+    public function getParkedLocation(string $vehicleId): array
+    {
+        $response = $this->request('GET', '/api/v1/spa/vehicles/' . $vehicleId . '/location/park');
+        return $response['resMsg'] ?? [];
+    }
+
     public function getVehicleLocation(string $vehicleId): array
     {
         $response = $this->request('GET', '/api/v1/spa/vehicles/' . $vehicleId . '/location');
@@ -266,7 +273,9 @@ class BluelinkApiClient
 
     public function refreshVehicleStatus(string $vehicleId): array
     {
-        $response = $this->request('GET', '/api/v1/spa/vehicles/' . $vehicleId . '/status', null, [], self::LONG_REQUEST_TIMEOUT, 1);
+        // CCS2 cars wake via /ccs2/carstatus (without /latest); the fresh state is read from /latest afterwards
+        $path = $this->ccs2Support > 0 ? '/ccs2/carstatus' : '/status';
+        $response = $this->request('GET', '/api/v1/spa/vehicles/' . $vehicleId . $path, null, [], self::LONG_REQUEST_TIMEOUT, 1);
         return $response['resMsg'] ?? [];
     }
 

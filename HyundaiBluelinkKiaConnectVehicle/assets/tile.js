@@ -221,7 +221,8 @@
 
   function vehicle(s) {
     const keys = Array.isArray(s.rows) ? s.rows : DEFAULT_ROWS;
-    const html = keys.map(k => (ROWS[k] ? ROWS[k](s) : null)).filter(Boolean)
+    // Zusatzwerte (Reifendruck, Warnungen, Abfahrtszeiten …) bringt der Server fertig mit: [Symbol, Beschriftung, Wert, Warnung]
+    const html = keys.map(k => (ROWS[k] ? ROWS[k](s) : (s.extras && s.extras[k]) || null)).filter(Boolean)
       .map(([icon, label, value, warn]) => '<div class="row' + (warn ? ' warn' : '') + '">' + I(icon) + '<span>' + esc(label) + '</span><b>' + esc(value) + '</b></div>').join('');
     return html ? '<section class="card list"><h3>' + esc(T('Vehicle')) + '</h3>' + html + '</section>' : '';
   }

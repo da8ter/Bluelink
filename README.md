@@ -55,6 +55,18 @@ Neuere Hyundai- und Kia-Fahrzeuge nutzen das **CCS2-Protokoll** (Connected Car S
 
 > **Hinweis:** Fahrzeuge ohne CCS2-Support verwenden weiterhin den Legacy-Endpoint. Die `ChargingPowerKw`-Variable zeigt dort 0.0 kW, da die Legacy-API diesen Wert nicht liefert.
 
+## Weitere Fahrzeugwerte
+
+Zusätzlich zu den Grundwerten liest das Modul, was das Auto meldet. Eine Variable entsteht erst, wenn das Auto den Wert zum ersten Mal liefert. Fahrzeuge ohne den passenden Sensor bekommen keine leeren Variablen.
+
+- **Reifen:** Reifendruck je Rad in bar (nur CCS2-Fahrzeuge mit direkt messenden Reifensensoren), Reifendruck-Warnung gesamt und je Rad (alle Fahrzeuge). Fahrzeuge mit indirekter Reifendruckkontrolle liefern über die API nur die Warnungen, auch wenn die App Werte zeigt.
+- **Warnungen:** Waschwasser, Bremsflüssigkeit, Schlüsselbatterie, Ölstand, 12-V-Batterie-Fehler, Leuchtmittel, Tank.
+- **Klima und Komfort:** Außentemperatur, Sitzheizung und -kühlung je Sitz, Heckscheiben- und Spiegelheizung, Schiebedach, Verriegelung je Tür, fahrbereit, Fahrmodus.
+- **Akku und Laden:** Akkugesundheit (SoH), Energie und Kapazität in kWh, geschätzte Ladedauer an Wallbox, Ladeziegel und Schnelllader, Reichweite beim Ladelimit AC/DC, Abfahrtszeiten 1 und 2, Nebenzeit-Laden, geplantes Laden (nur lesen).
+- **Verbrauch:** Energieverbrauch und Rekuperation gesamt sowie Verbrauch der letzten 30 Tage (Elektro- und Plug-in-Fahrzeuge).
+
+Welche Werte ein Auto liefert, hängt von Modell, Antrieb und Protokoll ab. In der Dashboard-Kachel lassen sich die Werte als Zeilen der Karte „Fahrzeug“ auswählen.
+
 ## Bekannte Einschränkungen
 
 - **EU Login-Flow**: Hyundai/Kia ändern den Login-Flow regelmäßig. Bei Problemen Refresh Token aktualisieren.

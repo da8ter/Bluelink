@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/VehicleExtras.php';
+
 class VehicleStatusMapper
 {
     /**
@@ -50,14 +52,14 @@ class VehicleStatusMapper
             // Drive data
             'OdometerKm'        => self::extractOdometer($rawStatus),
             'FuelLevelPercent'  => self::getInt($vehicleStatus, 'fuelLevel', -1),
-            'Battery12VPercent' => self::getInt($vehicleStatus, 'battery', -1, 'batSoc'),
+            'Battery12VPercent' => VehicleExtras::battery12V($vehicleStatus['battery']['batSoc'] ?? null),
             'Battery12VState'   => self::getInt($vehicleStatus, 'battery', -1, 'batState'),
 
             // Timestamps
             'LastUpdateTimestamp' => self::getTimestamp($vehicleStatus),
             // Time of the car's own last report (compact value in local time, as the EU API sends it)
             'VehicleTime'         => self::parseVehicleTime((string) ($vehicleStatus['time'] ?? $vehicleStatus['lastStatusDate'] ?? ''), 'Europe/Berlin'),
-        ];
+        ] + VehicleExtras::legacy($vehicleStatus);
     }
 
     /**
@@ -119,14 +121,13 @@ class VehicleStatusMapper
 
         $remainTime = self::nested($state, 'Green.ChargingInformation.Charging.RemainTime');
         $realTimePower = self::nested($state, 'Green.Electric.SmartGrid.RealTimePower');
-        $chargingCurrent = self::nested($state, 'Green.ChargingInformation.ElectricCurrentLevel.State');
 
         $chargingState = 0;
         $chargingRemainingMin = 0;
         if ($pluggedIn || $chargePortOpen) {
+            // ElectricCurrentLevel.State is the configured AC current level, not a charging indicator
             $isCharging = ($remainTime !== null && (int) $remainTime > 0)
-                || ($realTimePower !== null && (float) $realTimePower > 0)
-                || ($chargingCurrent !== null && (int) $chargingCurrent > 0);
+                || ($realTimePower !== null && (float) $realTimePower > 0);
             if ($isCharging) {
                 $chargingState = 2;
                 $chargingRemainingMin = ($remainTime !== null) ? (int) $remainTime : 0;
@@ -149,7 +150,7 @@ class VehicleStatusMapper
         $defrost = ($defrostState === 1);
         $steerHeat = self::nested($state, 'Cabin.SteeringWheel.Heat.State');
 
-        $battery12v = self::nested($state, 'Electronics.Battery.Level');
+        $fuelLevel = self::nested($state, 'Drivetrain.FuelSystem.FuelLevel');
 
         return [
             // Doors & Security
@@ -162,10 +163,11 @@ class VehicleStatusMapper
             'HoodOpen'          => (bool) self::nested($state, 'Body.Hood.Open'),
 
             // Windows
-            'WindowOpenDriver'    => (bool) self::nested($state, 'Cabin.Window.Row1.Driver.Open'),
-            'WindowOpenPassenger' => (bool) self::nested($state, 'Cabin.Window.Row1.Passenger.Open'),
-            'WindowOpenRearLeft'  => (bool) self::nested($state, 'Cabin.Window.Row2.Left.Open'),
-            'WindowOpenRearRight' => (bool) self::nested($state, 'Cabin.Window.Row2.Right.Open'),
+            // Vented windows report Open=0 with OpenLevel>0 and count as open
+            'WindowOpenDriver'    => VehicleExtras::windowOpen($state, 'Cabin.Window.Row1.Driver'),
+            'WindowOpenPassenger' => VehicleExtras::windowOpen($state, 'Cabin.Window.Row1.Passenger'),
+            'WindowOpenRearLeft'  => VehicleExtras::windowOpen($state, 'Cabin.Window.Row2.Left'),
+            'WindowOpenRearRight' => VehicleExtras::windowOpen($state, 'Cabin.Window.Row2.Right'),
 
             // EV & Charging
             'SOC'                    => ($soc !== null) ? (int) $soc : 0,
@@ -185,15 +187,15 @@ class VehicleStatusMapper
 
             // Drive data
             'OdometerKm'        => ($odometer !== null) ? round((float) $odometer, 1) : 0.0,
-            'FuelLevelPercent'  => -1,
-            'Battery12VPercent' => ($battery12v !== null) ? (int) $battery12v : -1,
+            'FuelLevelPercent'  => is_numeric($fuelLevel) ? (int) $fuelLevel : -1,
+            'Battery12VPercent' => VehicleExtras::battery12V(self::nested($state, 'Electronics.Battery.Level'), self::nested($state, 'Electronics.Battery.SensorReliability')),
             'Battery12VState'   => -1,
 
             // Timestamps
             'LastUpdateTimestamp' => date('c'),
             // CCS2 'Date' is UTC
             'VehicleTime'         => self::parseVehicleTime((string) ($state['Date'] ?? ''), 'UTC'),
-        ];
+        ] + VehicleExtras::ccs2($state);
     }
 
     /**

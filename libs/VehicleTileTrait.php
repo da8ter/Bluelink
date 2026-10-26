@@ -33,10 +33,16 @@ trait VehicleTileTrait
     private static function defaultVehicleRows(): string
     {
         $rows = [];
-        foreach (self::VEHICLE_ROWS as $key => [, $visible]) {
+        foreach (self::allVehicleRows() as $key => [, $visible]) {
             $rows[] = ['Key' => $key, 'Visible' => $visible];
         }
         return (string) json_encode($rows);
+    }
+
+    /** Core rows and the rows of the additional values (VehicleExtrasTrait). */
+    private static function allVehicleRows(): array
+    {
+        return self::VEHICLE_ROWS + self::EXTRA_ROWS;
     }
 
     /** Configured rows in their order (key => visible), unknown keys dropped, new keys appended. */
@@ -45,11 +51,11 @@ trait VehicleTileTrait
         $rows = [];
         foreach (json_decode($this->ReadPropertyString('VehicleRows'), true) ?: [] as $row) {
             $key = (string) ($row['Key'] ?? '');
-            if (isset(self::VEHICLE_ROWS[$key]) && !isset($rows[$key])) {
+            if (isset(self::allVehicleRows()[$key]) && !isset($rows[$key])) {
                 $rows[$key] = (bool) ($row['Visible'] ?? false);
             }
         }
-        foreach (self::VEHICLE_ROWS as $key => [, $visible]) {
+        foreach (self::allVehicleRows() as $key => [, $visible]) {
             $rows[$key] ??= $visible;
         }
         return $rows;
@@ -64,7 +70,7 @@ trait VehicleTileTrait
         $form = json_decode((string) file_get_contents(__DIR__ . '/../HyundaiBluelinkKiaConnectVehicle/form.json'), true);
         $values = [];
         foreach ($this->vehicleRows() as $key => $visible) {
-            $values[] = ['Key' => $key, 'Label' => $this->Translate(self::VEHICLE_ROWS[$key][0]), 'Visible' => $visible];
+            $values[] = ['Key' => $key, 'Label' => $this->Translate(self::allVehicleRows()[$key][0]), 'Visible' => $visible];
         }
         $fill = static function (array &$elements) use (&$fill, $values): void {
             foreach ($elements as &$element) {
@@ -421,6 +427,7 @@ trait VehicleTileTrait
             // Only the last days; the whole log can be large (unlimited retention). Older months on request.
             'trips'     => (object) TripLog::window($log, date('Y-m-d')),
             'rows'      => array_keys(array_filter($this->vehicleRows())),
+            'extras'    => (object) $this->extraRows(),
             'lastCommand' => $timestamp((string) $value('LastCommandTimestamp', ''), 'd.m.Y H:i:s'),
             'cloudCount' => (int) $value('CloudRefreshCounter', 0),
             'vehicleCount' => (int) $value('VehicleRefreshCounter', 0),

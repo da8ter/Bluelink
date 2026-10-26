@@ -5,10 +5,12 @@ declare(strict_types=1);
 require_once __DIR__ . '/../libs/DrivingStats.php';
 require_once __DIR__ . '/../libs/TripLog.php';
 require_once __DIR__ . '/../libs/VehicleTileTrait.php';
+require_once __DIR__ . '/../libs/VehicleExtrasTrait.php';
 
 class HyundaiBluelinkKiaConnectVehicle extends IPSModule
 {
     use VehicleTileTrait;
+    use VehicleExtrasTrait;
 
     private const DEFAULT_POLL_INTERVAL = 300;
     private const DEFAULT_FORCE_REFRESH_INTERVAL = 0;
@@ -437,6 +439,7 @@ class HyundaiBluelinkKiaConnectVehicle extends IPSModule
             return;
         }
 
+        $this->applyExtras($result['totals'] ?? []);
         $days = DrivingStats::parseDays($result['days'] ?? []);
         $this->WriteAttributeString('DrivingDays', json_encode((object) $days));
         $this->tileChanged();
@@ -548,13 +551,14 @@ class HyundaiBluelinkKiaConnectVehicle extends IPSModule
         $this->SetValue('VehicleRefreshCounter', $this->GetValue('VehicleRefreshCounter') + 1);
     }
 
+    /** Asks the car for its position (/location); the regular poll reads the parked position. */
     public function RefreshLocation(): void
     {
         $vehicleId = $this->ReadPropertyString('VehicleId');
         if (empty($vehicleId)) {
             return;
         }
-        $this->FetchAndApplyLocation($vehicleId);
+        $this->FetchAndApplyLocation($vehicleId, true);
     }
 
     public function Lock(): void
@@ -682,7 +686,8 @@ class HyundaiBluelinkKiaConnectVehicle extends IPSModule
             $this->SendDebug('PollCommand', 'Command completed: ' . ($commandState['type'] ?? ''), 0);
 
             if ($this->ReadPropertyBoolean('RefreshOnAction')) {
-                $this->SetTimerInterval('RefreshAfterCommand', 2000);
+                // After a wake-up the car needs a while until the cloud has the fresh state (CCS2 ~20 s)
+                $this->SetTimerInterval('RefreshAfterCommand', ($commandState['type'] ?? '') === 'RefreshVehicleStatus' ? 20000 : 2000);
             }
         }
     }
@@ -711,9 +716,9 @@ class HyundaiBluelinkKiaConnectVehicle extends IPSModule
         $this->SetValue('CloudRefreshCounter', $this->GetValue('CloudRefreshCounter') + 1);
     }
 
-    private function FetchAndApplyLocation(string $vehicleId): void
+    private function FetchAndApplyLocation(string $vehicleId, bool $force = false): void
     {
-        $result = $this->SendToParent('GetVehicleLocation', ['VehicleId' => $vehicleId]);
+        $result = $this->SendToParent('GetVehicleLocation', ['VehicleId' => $vehicleId, 'Force' => $force]);
 
         if (!($result['success'] ?? false)) {
             $this->SendDebug('Location', 'Failed: ' . ($result['error'] ?? 'unknown'), 0);
@@ -783,6 +788,7 @@ class HyundaiBluelinkKiaConnectVehicle extends IPSModule
         $switchCooldown = (int) $this->GetBuffer('SwitchCooldown');
         $skipSwitch = $switchCooldown > 0 && (time() - $switchCooldown) < 120;
         $switchIdents = ['DoorsLocked', 'ClimateOn', 'ChargeAction'];
+        $this->applyExtras($status);
 
         foreach ($map as $ident => $config) {
             if (!array_key_exists($ident, $status)) {

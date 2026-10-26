@@ -71,7 +71,7 @@ class HyundaiBluelinkKiaConnectAccount extends IPSModule
                 return $this->GetVehicleStatusJSON($data['VehicleId'] ?? '');
 
             case 'GetVehicleLocation':
-                return $this->GetVehicleLocationJSON($data['VehicleId'] ?? '');
+                return $this->GetVehicleLocationJSON($data['VehicleId'] ?? '', (bool) ($data['Force'] ?? false));
 
             case 'GetVehicleOdometer':
                 return $this->GetVehicleOdometerJSON($data['VehicleId'] ?? '');
@@ -227,6 +227,8 @@ class HyundaiBluelinkKiaConnectAccount extends IPSModule
 
             if (!empty($status['_ccs2'])) {
                 $this->SendDebug('GetVehicleStatus', 'Using CCS2 mapper', 0);
+                // Fahrwerk (Reifendruck u. a.) roh, um fehlende Werte gemeldeter Modelle nachzuvollziehen
+                $this->SendDebug('GetVehicleStatus', 'Chassis: ' . json_encode($status['state']['Chassis'] ?? null), 0);
                 $mapped = VehicleStatusMapper::mapStatusCCS2($status);
             } else {
                 $mapped = VehicleStatusMapper::mapStatus($status);
@@ -240,13 +242,22 @@ class HyundaiBluelinkKiaConnectAccount extends IPSModule
         }
     }
 
-    private function GetVehicleLocationJSON(string $vehicleId): string
+    /** Regular polls read the parked position (/location/park, does not wake the car); $force asks the car (/location). */
+    private function GetVehicleLocationJSON(string $vehicleId, bool $force): string
     {
         $services = null;
         try {
             $services = $this->createApiClientWithAuth();
-            $location = $services['client']->getVehicleLocation($vehicleId);
+            $location = $force ? $services['client']->getVehicleLocation($vehicleId) : $services['client']->getParkedLocation($vehicleId);
+            if (!$force && empty($location['coord']['lat'])) {
+                $location = $services['client']->getVehicleLocation($vehicleId); // older accounts without /location/park
+            }
             $mapped = VehicleStatusMapper::mapLocation($location);
+            if ($force && preg_match('/^\d{14}$/', (string) ($location['time'] ?? ''))) {
+                // /location reports UTC, /location/park and the status local time; keep local time throughout
+                $utc = DateTime::createFromFormat('YmdHis', (string) $location['time'], new DateTimeZone('UTC'));
+                $mapped['PositionTimestamp'] = $utc === false ? $mapped['PositionTimestamp'] : $utc->setTimezone(new DateTimeZone(date_default_timezone_get()))->format('YmdHis');
+            }
             return json_encode(['success' => true, 'location' => $mapped]);
         } catch (Exception $e) {
             $this->SendDebug('GetVehicleLocation', 'Error: ' . $e->getMessage(), 0);
@@ -279,7 +290,13 @@ class HyundaiBluelinkKiaConnectAccount extends IPSModule
             $services = $this->createApiClientWithAuth();
             $history = $services['client']->getDrivingHistory($vehicleId, 0);
             $this->SendDebug('GetDrivingHistory', 'Days: ' . count($history['drivingInfoDetail'] ?? []), 0);
-            return json_encode(['success' => true, 'days' => $history['drivingInfoDetail'] ?? []]);
+            try {
+                $totals = VehicleExtras::drivingTotals($services['client']->getDrivingHistory($vehicleId, 1), $history);
+            } catch (Exception $e) {
+                $totals = [];
+                $this->SendDebug('GetDrivingHistory', 'Totals failed: ' . $e->getMessage(), 0);
+            }
+            return json_encode(['success' => true, 'days' => $history['drivingInfoDetail'] ?? [], 'totals' => $totals]);
         } catch (Exception $e) {
             $this->SendDebug('GetDrivingHistory', 'Error: ' . $e->getMessage(), 0);
             return json_encode(['success' => false, 'error' => $e->getMessage()]);
@@ -330,6 +347,7 @@ class HyundaiBluelinkKiaConnectAccount extends IPSModule
                     $result = $client->stopCharge($vehicleId);
                     break;
                 case 'RefreshVehicleStatus':
+                    $client->setCCS2Support($this->getVehicleCCS2Support($vehicleId));
                     $result = $client->refreshVehicleStatus($vehicleId);
                     break;
                 default:
